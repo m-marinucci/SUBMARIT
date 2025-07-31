@@ -1,0 +1,449 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evaluation Methods &mdash; SUBMARIT 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            SUBMARIT
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../algorithms.html">Algorithm Theory and Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance.html">Performance Tuning Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../migration_guide.html">MATLAB to Python Migration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions (FAQ)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SUBMARIT</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Evaluation Methods</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/evaluation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="evaluation-methods">
+<h1>Evaluation Methods<a class="headerlink" href="#evaluation-methods" title="Link to this heading"></a></h1>
+<p>This section covers all evaluation and validation methods for assessing clustering quality.</p>
+<section id="cluster-quality-metrics">
+<h2>Cluster Quality Metrics<a class="headerlink" href="#cluster-quality-metrics" title="Link to this heading"></a></h2>
+<section id="internal-validation-metrics">
+<h3>Internal Validation Metrics<a class="headerlink" href="#internal-validation-metrics" title="Link to this heading"></a></h3>
+<p>These metrics evaluate clustering quality without external labels:</p>
+<p><strong>Silhouette Coefficient</strong></p>
+<p>Measures how similar a product is to its own cluster compared to other clusters.</p>
+<div class="math notranslate nohighlight">
+\[s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))}\]</div>
+<p>where <span class="math notranslate nohighlight">\(a(i)\)</span> is the average distance to products in the same cluster and <span class="math notranslate nohighlight">\(b(i)\)</span> is the average distance to the nearest cluster.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">silhouette_score</span>
+
+<span class="n">score</span> <span class="o">=</span> <span class="n">silhouette_score</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Silhouette score: </span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Range: [-1, 1], higher is better</span>
+
+<span class="c1"># Per-sample scores</span>
+<span class="n">sample_scores</span> <span class="o">=</span> <span class="n">silhouette_samples</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Calinski-Harabasz Index</strong></p>
+<p>Ratio of between-cluster to within-cluster variance:</p>
+<div class="math notranslate nohighlight">
+\[CH = \frac{SS_B / (k-1)}{SS_W / (n-k)}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">calinski_harabasz_score</span>
+
+<span class="n">ch_score</span> <span class="o">=</span> <span class="n">calinski_harabasz_score</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CH index: </span><span class="si">{</span><span class="n">ch_score</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Higher is better</span>
+</pre></div>
+</div>
+<p><strong>Davies-Bouldin Index</strong></p>
+<p>Average similarity between each cluster and its most similar cluster:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">davies_bouldin_score</span>
+
+<span class="n">db_score</span> <span class="o">=</span> <span class="n">davies_bouldin_score</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DB index: </span><span class="si">{</span><span class="n">db_score</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Lower is better</span>
+</pre></div>
+</div>
+<p><strong>Dunn Index</strong></p>
+<p>Ratio of minimum inter-cluster to maximum intra-cluster distance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">dunn_index</span>
+
+<span class="n">dunn</span> <span class="o">=</span> <span class="n">dunn_index</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dunn index: </span><span class="si">{</span><span class="n">dunn</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Higher is better</span>
+</pre></div>
+</div>
+</section>
+<section id="comprehensive-evaluation">
+<h3>Comprehensive Evaluation<a class="headerlink" href="#comprehensive-evaluation" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClusterEvaluator</span>
+
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">ClusterEvaluator</span><span class="p">()</span>
+
+<span class="c1"># Evaluate all metrics at once</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
+
+<span class="c1"># Pretty print results</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">print_report</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+
+<span class="c1"># Get LaTeX table</span>
+<span class="n">latex_table</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">to_latex</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+
+<span class="c1"># Compare multiple clusterings</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">):</span>
+    <span class="n">ls</span> <span class="o">=</span> <span class="n">LocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+    <span class="n">clusters</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">clusters</span><span class="p">)</span>
+    <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+
+<span class="c1"># Find best k by metric</span>
+<span class="n">best_k_silhouette</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;silhouette&#39;</span><span class="p">])[</span><span class="s1">&#39;k&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="statistical-validation">
+<h2>Statistical Validation<a class="headerlink" href="#statistical-validation" title="Link to this heading"></a></h2>
+<section id="gap-statistic">
+<h3>Gap Statistic<a class="headerlink" href="#gap-statistic" title="Link to this heading"></a></h3>
+<p>Compares within-cluster dispersion to that expected under null hypothesis:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">gap_statistic</span>
+
+<span class="c1"># Single k value</span>
+<span class="n">gap</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="n">gap_statistic</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_bootstrap</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+
+<span class="c1"># Find optimal k</span>
+<span class="n">gaps</span><span class="p">,</span> <span class="n">stds</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+<span class="n">k_values</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">:</span>
+    <span class="n">gap</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="n">gap_statistic</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">n_bootstrap</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gap</span><span class="p">)</span>
+    <span class="n">stds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">std</span><span class="p">)</span>
+
+<span class="c1"># Apply 1-std rule</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gaps</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">gaps</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">gaps</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">stds</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]:</span>
+        <span class="n">optimal_k</span> <span class="o">=</span> <span class="n">k_values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">break</span>
+</pre></div>
+</div>
+</section>
+<section id="stability-analysis">
+<h3>Stability Analysis<a class="headerlink" href="#stability-analysis" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">stability_analysis</span>
+
+<span class="c1"># Bootstrap stability</span>
+<span class="n">stability_scores</span> <span class="o">=</span> <span class="n">stability_analysis</span><span class="p">(</span>
+    <span class="n">S</span><span class="p">,</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s1">&#39;bootstrap&#39;</span><span class="p">,</span>
+    <span class="n">n_iterations</span><span class="o">=</span><span class="mi">100</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stability: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">stability_scores</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">stability_scores</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Noise injection stability</span>
+<span class="n">noise_stability</span> <span class="o">=</span> <span class="n">stability_analysis</span><span class="p">(</span>
+    <span class="n">S</span><span class="p">,</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s1">&#39;noise&#39;</span><span class="p">,</span>
+    <span class="n">noise_level</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">n_iterations</span><span class="o">=</span><span class="mi">50</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="visualization-tools">
+<h2>Visualization Tools<a class="headerlink" href="#visualization-tools" title="Link to this heading"></a></h2>
+<section id="substitution-matrix-visualization">
+<h3>Substitution Matrix Visualization<a class="headerlink" href="#substitution-matrix-visualization" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_substitution_matrix</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># Basic plot</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">plot_substitution_matrix</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># With product names</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">plot_substitution_matrix</span><span class="p">(</span>
+    <span class="n">S</span><span class="p">,</span>
+    <span class="n">clusters</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="n">product_names</span><span class="p">,</span>
+    <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">,</span>
+    <span class="n">show_dendogram</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="cluster-quality-plots">
+<h3>Cluster Quality Plots<a class="headerlink" href="#cluster-quality-plots" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">plot_silhouette_analysis</span><span class="p">,</span>
+    <span class="n">plot_cluster_comparison</span>
+<span class="p">)</span>
+
+<span class="c1"># Silhouette plot</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plot_silhouette_analysis</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+<span class="c1"># Compare different k values</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_cluster_comparison</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">k_range</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="elbow-method-plot">
+<h3>Elbow Method Plot<a class="headerlink" href="#elbow-method-plot" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_elbow_method</span>
+
+<span class="c1"># Calculate within-cluster sum of squares</span>
+<span class="n">wcss</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">k_values</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_values</span><span class="p">:</span>
+    <span class="n">ls</span> <span class="o">=</span> <span class="n">LocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+    <span class="n">ls</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+    <span class="n">wcss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ls</span><span class="o">.</span><span class="n">objective_</span><span class="p">)</span>
+
+<span class="c1"># Plot elbow</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plot_elbow_method</span><span class="p">(</span><span class="n">k_values</span><span class="p">,</span> <span class="n">wcss</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="d-visualization">
+<h3>3D Visualization<a class="headerlink" href="#d-visualization" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_3d_clusters</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+
+<span class="c1"># Reduce dimensions for visualization</span>
+<span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">X_3d</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+
+<span class="c1"># 3D scatter plot</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plot_3d_clusters</span><span class="p">(</span><span class="n">X_3d</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">product_names</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="entropy-based-evaluation">
+<h2>Entropy-Based Evaluation<a class="headerlink" href="#entropy-based-evaluation" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntropyEvaluator</span>
+
+<span class="c1"># Initialize with product attributes</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">EntropyEvaluator</span><span class="p">()</span>
+
+<span class="c1"># Calculate entropy metrics</span>
+<span class="n">entropy_metrics</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
+    <span class="n">clusters</span><span class="p">,</span>
+    <span class="n">product_attributes</span><span class="p">,</span>  <span class="c1"># DataFrame with categorical attributes</span>
+    <span class="n">attribute_columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;brand&#39;</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">,</span> <span class="s1">&#39;price_range&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Normalized mutual information</span>
+<span class="n">nmi</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">normalized_mutual_info</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">true_labels</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="comparative-analysis">
+<h2>Comparative Analysis<a class="headerlink" href="#comparative-analysis" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComparativeAnalyzer</span>
+
+<span class="c1"># Compare multiple algorithms</span>
+<span class="n">algorithms</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Local Search&#39;</span><span class="p">:</span> <span class="n">LocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
+    <span class="s1">&#39;K-Means&#39;</span><span class="p">:</span> <span class="n">KMeansAdapter</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
+    <span class="s1">&#39;Hierarchical&#39;</span><span class="p">:</span> <span class="n">HierarchicalAdapter</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">analyzer</span> <span class="o">=</span> <span class="n">ComparativeAnalyzer</span><span class="p">()</span>
+<span class="n">comparison</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">compare</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">algorithms</span><span class="p">)</span>
+
+<span class="c1"># Generate report</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">generate_report</span><span class="p">(</span><span class="n">comparison</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+
+<span class="c1"># Plot comparison</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">plot_comparison</span><span class="p">(</span><span class="n">comparison</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="cluster-profiling">
+<h2>Cluster Profiling<a class="headerlink" href="#cluster-profiling" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClusterProfiler</span>
+
+<span class="n">profiler</span> <span class="o">=</span> <span class="n">ClusterProfiler</span><span class="p">()</span>
+
+<span class="c1"># Generate cluster profiles</span>
+<span class="n">profiles</span> <span class="o">=</span> <span class="n">profiler</span><span class="o">.</span><span class="n">create_profiles</span><span class="p">(</span>
+    <span class="n">clusters</span><span class="p">,</span>
+    <span class="n">product_features</span><span class="p">,</span>
+    <span class="n">product_names</span><span class="p">,</span>
+    <span class="n">feature_names</span>
+<span class="p">)</span>
+
+<span class="c1"># Print cluster summaries</span>
+<span class="k">for</span> <span class="n">cluster_id</span><span class="p">,</span> <span class="n">profile</span> <span class="ow">in</span> <span class="n">profiles</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Cluster </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Size: </span><span class="si">{</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Top features: </span><span class="si">{</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;top_features&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Representative products: </span><span class="si">{</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;representatives&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="export-results">
+<h2>Export Results<a class="headerlink" href="#export-results" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResultsExporter</span>
+
+<span class="n">exporter</span> <span class="o">=</span> <span class="n">ResultsExporter</span><span class="p">()</span>
+
+<span class="c1"># Export to various formats</span>
+<span class="n">exporter</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="s1">&#39;results.xlsx&#39;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s1">&#39;clusters&#39;</span><span class="p">:</span> <span class="n">clusters</span><span class="p">,</span>
+    <span class="s1">&#39;metrics&#39;</span><span class="p">:</span> <span class="n">metrics</span><span class="p">,</span>
+    <span class="s1">&#39;profiles&#39;</span><span class="p">:</span> <span class="n">profiles</span>
+<span class="p">})</span>
+
+<span class="n">exporter</span><span class="o">.</span><span class="n">to_latex</span><span class="p">(</span><span class="s1">&#39;results.tex&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="p">)</span>
+<span class="n">exporter</span><span class="o">.</span><span class="n">to_html</span><span class="p">(</span><span class="s1">&#39;results.html&#39;</span><span class="p">,</span> <span class="n">full_report</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Always use multiple metrics</strong> - No single metric captures all aspects</p></li>
+<li><p><strong>Validate stability</strong> - Ensure clusters are robust to data perturbations</p></li>
+<li><p><strong>Visualize results</strong> - Visual inspection often reveals insights metrics miss</p></li>
+<li><p><strong>Compare with baselines</strong> - Random clustering provides lower bound</p></li>
+<li><p><strong>Consider domain knowledge</strong> - Metrics should align with business objectives</p></li>
+</ol>
+</section>
+<section id="example-complete-evaluation-pipeline">
+<h2>Example: Complete Evaluation Pipeline<a class="headerlink" href="#example-complete-evaluation-pipeline" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubmarketAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_evaluation_report</span>
+
+<span class="c1"># Load data</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">product_names</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="s1">&#39;products.csv&#39;</span><span class="p">)</span>
+<span class="n">S</span> <span class="o">=</span> <span class="n">create_substitution_matrix</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+<span class="c1"># Find optimal k</span>
+<span class="n">analyzer</span> <span class="o">=</span> <span class="n">SubmarketAnalyzer</span><span class="p">()</span>
+<span class="n">k_results</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">find_optimal_k</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">k_range</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">))</span>
+<span class="n">optimal_k</span> <span class="o">=</span> <span class="n">k_results</span><span class="p">[</span><span class="s1">&#39;optimal_k&#39;</span><span class="p">]</span>
+
+<span class="c1"># Perform clustering</span>
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">cluster</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="n">optimal_k</span><span class="p">)</span>
+
+<span class="c1"># Comprehensive evaluation</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">create_evaluation_report</span><span class="p">(</span>
+    <span class="n">S</span><span class="p">,</span>
+    <span class="n">clusters</span><span class="p">,</span>
+    <span class="n">product_names</span><span class="o">=</span><span class="n">product_names</span><span class="p">,</span>
+    <span class="n">product_features</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+    <span class="n">include_visualization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;evaluation_results&#39;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, SUBMARIT Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

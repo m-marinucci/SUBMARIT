@@ -1,0 +1,554 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>submarit.validation.kfold &mdash; SUBMARIT 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SUBMARIT
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../algorithms.html">Algorithm Theory and Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance.html">Performance Tuning Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../migration_guide.html">MATLAB to Python Migration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">Frequently Asked Questions (FAQ)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SUBMARIT</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">submarit.validation.kfold</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for submarit.validation.kfold</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;K-fold cross-validation for SUBMARIT clustering.</span>
+
+<span class="sd">This module implements k-fold cross-validation for SUBMARIT clustering algorithms,</span>
+<span class="sd">following the methodology from kSMNFold.m and kSMNFold2.m. It supports:</span>
+
+<span class="sd">1. Standard k-fold validation with train/test splitting</span>
+<span class="sd">2. Empirical distribution generation for Rand index</span>
+<span class="sd">3. Constrained clustering for test set assignment</span>
+<span class="sd">4. Multiple clustering algorithm support</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">as_completed</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.core.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseValidator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms.local_search</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">KSMLocalSearch</span><span class="p">,</span> <span class="n">KSMLocalSearch2</span><span class="p">,</span>
+    <span class="n">KSMLocalSearchConstrained</span><span class="p">,</span> <span class="n">KSMLocalSearchConstrained2</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.validation.rand_index</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandIndex</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.validation.multiple_runs</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_clusters</span><span class="p">,</span> <span class="n">run_clusters_constrained</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">KFoldResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for k-fold validation results.</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        av_rand: Average Rand index across all fold pairs</span>
+<span class="sd">        av_adj_rand: Average adjusted Rand index across all fold pairs</span>
+<span class="sd">        av_rand_dist: Empirical distribution for average Rand index (if computed)</span>
+<span class="sd">        av_adj_rand_dist: Empirical distribution for average adjusted Rand index</span>
+<span class="sd">        fold_results: List of clustering results for each fold</span>
+<span class="sd">        rand_pairs: Rand index values for each fold pair</span>
+<span class="sd">        adj_rand_pairs: Adjusted Rand index values for each fold pair</span>
+<span class="sd">        n_folds: Number of folds used</span>
+<span class="sd">        n_random: Number of random permutations for empirical distribution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">av_rand</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">av_adj_rand</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">av_rand_dist</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">av_adj_rand_dist</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fold_results</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rand_pairs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">adj_rand_pairs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">n_folds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_random</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate summary of k-fold validation results.&quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;K-Fold Cross-Validation Results&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">40</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Number of folds: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_folds</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Average Rand index: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">av_rand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Average adjusted Rand index: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">av_adj_rand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">av_rand_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span>
+                <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Empirical distribution statistics:&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;  Random permutations: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_random</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;  Rand index 95% CI: [</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">av_rand_dist</span><span class="p">,</span><span class="w"> </span><span class="mf">2.5</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">av_rand_dist</span><span class="p">,</span><span class="w"> </span><span class="mf">97.5</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;  Adjusted Rand 95% CI: [</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">av_adj_rand_dist</span><span class="p">,</span><span class="w"> </span><span class="mf">2.5</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">av_adj_rand_dist</span><span class="p">,</span><span class="w"> </span><span class="mf">97.5</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span>
+            <span class="p">])</span>
+            
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="KFoldValidator">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.KFoldValidator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KFoldValidator</span><span class="p">(</span><span class="n">BaseValidator</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;K-fold cross-validation for SUBMARIT clustering.</span>
+<span class="sd">    </span>
+<span class="sd">    This validator implements the k-fold validation procedure from kSMNFold.m,</span>
+<span class="sd">    where data is split into k folds, each fold is held out as test data,</span>
+<span class="sd">    and the model is trained on the remaining k-1 folds. Test items are then</span>
+<span class="sd">    assigned using constrained clustering.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_folds : int, default=5</span>
+<span class="sd">        Number of folds for cross-validation</span>
+<span class="sd">    n_random : int, default=0</span>
+<span class="sd">        Number of random permutations for empirical distribution.</span>
+<span class="sd">        If 0, no empirical distribution is computed.</span>
+<span class="sd">    max_fold_run : int, optional</span>
+<span class="sd">        Maximum number of folds to actually run (defaults to n_folds).</span>
+<span class="sd">        Useful for testing with subset of folds.</span>
+<span class="sd">    random_state : int, optional</span>
+<span class="sd">        Random seed for reproducibility</span>
+<span class="sd">    n_jobs : int, default=1</span>
+<span class="sd">        Number of parallel jobs for empirical distribution generation.</span>
+<span class="sd">        -1 means using all processors.</span>
+<span class="sd">    algorithm : {&#39;v1&#39;, &#39;v2&#39;}, default=&#39;v1&#39;</span>
+<span class="sd">        Which clustering algorithm to use:</span>
+<span class="sd">        - &#39;v1&#39;: Uses KSMLocalSearch (PHat-P optimization)</span>
+<span class="sd">        - &#39;v2&#39;: Uses KSMLocalSearch2 (log-likelihood optimization)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_folds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="n">n_random</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">max_fold_run</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;v1&#39;</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the k-fold validator.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_folds</span> <span class="o">=</span> <span class="n">n_folds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_random</span> <span class="o">=</span> <span class="n">n_random</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_fold_run</span> <span class="o">=</span> <span class="n">max_fold_run</span> <span class="ow">or</span> <span class="n">n_folds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">algorithm</span>
+        
+        <span class="c1"># Validate parameters</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_folds</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;n_folds must be at least 2&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_fold_run</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_folds</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;max_fold_run cannot exceed n_folds&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;v1&#39;</span><span class="p">,</span> <span class="s1">&#39;v2&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;algorithm must be &#39;v1&#39; or &#39;v2&#39;&quot;</span><span class="p">)</span>
+            
+<div class="viewcode-block" id="KFoldValidator.validate">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.KFoldValidator.validate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">swm</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+        <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">min_items</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">n_runs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KFoldResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform k-fold cross-validation on switching matrix.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        swm : ndarray of shape (n_items, n_items)</span>
+<span class="sd">            Product x product switching matrix</span>
+<span class="sd">        n_clusters : int</span>
+<span class="sd">            Number of clusters</span>
+<span class="sd">        min_items : int, default=1</span>
+<span class="sd">            Minimum number of items per cluster</span>
+<span class="sd">        n_runs : int, default=10</span>
+<span class="sd">            Number of SUBMARIT runs for each optimization</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Additional parameters passed to clustering algorithm</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        result : KFoldResult</span>
+<span class="sd">            Cross-validation results including average Rand indices</span>
+<span class="sd">            and optional empirical distributions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_items</span> <span class="o">=</span> <span class="n">swm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="c1"># Generate random permutation of items</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="n">col_perm</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">n_items</span><span class="p">)</span>
+        
+        <span class="c1"># Storage for fold results</span>
+        <span class="n">fold_clusters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">fold_assignments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">random_assignments</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_random</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        
+        <span class="c1"># Process each fold</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_fold_run</span><span class="p">):</span>
+            <span class="c1"># Calculate fold boundaries</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">n_items</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_folds</span><span class="p">))</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_items</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_folds</span><span class="p">))</span>
+            
+            <span class="c1"># Split into test and train indices</span>
+            <span class="n">test_indexes</span> <span class="o">=</span> <span class="n">col_perm</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+            <span class="n">train_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_items</span><span class="p">),</span> <span class="n">test_indexes</span><span class="p">)</span>
+            
+            <span class="c1"># Check for zero rows/columns after removing test items</span>
+            <span class="n">sub_swm</span> <span class="o">=</span> <span class="n">swm</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">train_indexes</span><span class="p">,</span> <span class="n">train_indexes</span><span class="p">)]</span>
+            <span class="n">col_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sub_swm</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">row_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sub_swm</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="c1"># Find items that would create zero rows/columns</span>
+            <span class="n">chk_items</span> <span class="o">=</span> <span class="p">(</span><span class="n">col_sum</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">row_sum</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">rem_indexes</span> <span class="o">=</span> <span class="n">train_indexes</span><span class="p">[</span><span class="n">chk_items</span><span class="p">]</span>
+            
+            <span class="c1"># Move problematic items to test set</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rem_indexes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">test_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">test_indexes</span><span class="p">,</span> <span class="n">rem_indexes</span><span class="p">]))</span>
+                <span class="n">train_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">train_indexes</span><span class="p">,</span> <span class="n">rem_indexes</span><span class="p">)</span>
+                <span class="n">sub_swm</span> <span class="o">=</span> <span class="n">swm</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">train_indexes</span><span class="p">,</span> <span class="n">train_indexes</span><span class="p">)]</span>
+                
+            <span class="c1"># Run clustering on training data</span>
+            <span class="n">train_result</span> <span class="o">=</span> <span class="n">run_clusters</span><span class="p">(</span>
+                <span class="n">sub_swm</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_items</span><span class="p">,</span> <span class="n">n_runs</span><span class="p">,</span>
+                <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">,</span>
+                <span class="n">algorithm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Assign test items using constrained algorithm</span>
+            <span class="c1"># Need to convert train assignments to full array</span>
+            <span class="n">full_assign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+            <span class="n">full_assign</span><span class="p">[</span><span class="n">train_indexes</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_result</span><span class="o">.</span><span class="n">Assign</span>
+            
+            <span class="c1"># Run constrained clustering</span>
+            <span class="n">fold_result</span> <span class="o">=</span> <span class="n">run_clusters_constrained</span><span class="p">(</span>
+                <span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_items</span><span class="p">,</span>
+                <span class="n">full_assign</span><span class="p">[</span><span class="n">train_indexes</span><span class="p">],</span>
+                <span class="n">train_indexes</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Convert to 1-based</span>
+                <span class="n">test_indexes</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>   <span class="c1"># Convert to 1-based</span>
+                <span class="n">n_runs</span><span class="p">,</span>
+                <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">,</span>
+                <span class="n">algorithm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span>
+            <span class="p">)</span>
+            
+            <span class="n">fold_clusters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fold_result</span><span class="p">)</span>
+            <span class="n">fold_assignments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fold_result</span><span class="o">.</span><span class="n">Assign</span><span class="p">)</span>
+            
+            <span class="c1"># Generate random assignments for empirical distribution</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_random</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">random_fold</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">temp_col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+                <span class="n">temp_col</span><span class="p">[</span><span class="n">train_indexes</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_result</span><span class="o">.</span><span class="n">Assign</span>
+                
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_random</span><span class="p">):</span>
+                    <span class="c1"># Random assignment for test items</span>
+                    <span class="n">temp_col</span><span class="p">[</span><span class="n">test_indexes</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_clusters</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> 
+                                                         <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">test_indexes</span><span class="p">))</span>
+                    <span class="n">random_fold</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp_col</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+                    
+                <span class="n">random_assignments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span><span class="n">random_fold</span><span class="p">))</span>
+                
+        <span class="c1"># Calculate Rand indices for all fold pairs</span>
+        <span class="n">rand_calc</span> <span class="o">=</span> <span class="n">RandIndex</span><span class="p">()</span>
+        <span class="n">sum_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">sum_adj_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">rand_pairs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">adj_rand_pairs</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c1"># Calculate pairwise Rand indices</span>
+        <span class="n">n_pairs</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_fold_run</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_fold_run</span><span class="p">):</span>
+                <span class="n">rand</span><span class="p">,</span> <span class="n">adj_rand</span> <span class="o">=</span> <span class="n">rand_calc</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span>
+                    <span class="n">fold_assignments</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                    <span class="n">fold_assignments</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">sum_rand</span> <span class="o">+=</span> <span class="n">rand</span>
+                <span class="n">sum_adj_rand</span> <span class="o">+=</span> <span class="n">adj_rand</span>
+                <span class="n">n_pairs</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+                <span class="n">rand_pairs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">rand</span><span class="p">))</span>
+                <span class="n">adj_rand_pairs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">adj_rand</span><span class="p">))</span>
+                
+        <span class="c1"># Calculate averages</span>
+        <span class="n">av_rand</span> <span class="o">=</span> <span class="n">sum_rand</span> <span class="o">/</span> <span class="n">n_pairs</span> <span class="k">if</span> <span class="n">n_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">av_adj_rand</span> <span class="o">=</span> <span class="n">sum_adj_rand</span> <span class="o">/</span> <span class="n">n_pairs</span> <span class="k">if</span> <span class="n">n_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+        
+        <span class="c1"># Generate empirical distribution if requested</span>
+        <span class="n">av_rand_dist</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">av_adj_rand_dist</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_random</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">av_rand_dist</span><span class="p">,</span> <span class="n">av_adj_rand_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_empirical_distribution</span><span class="p">(</span>
+                <span class="n">random_assignments</span><span class="p">,</span> <span class="n">rand_calc</span>
+            <span class="p">)</span>
+            
+        <span class="k">return</span> <span class="n">KFoldResult</span><span class="p">(</span>
+            <span class="n">av_rand</span><span class="o">=</span><span class="n">av_rand</span><span class="p">,</span>
+            <span class="n">av_adj_rand</span><span class="o">=</span><span class="n">av_adj_rand</span><span class="p">,</span>
+            <span class="n">av_rand_dist</span><span class="o">=</span><span class="n">av_rand_dist</span><span class="p">,</span>
+            <span class="n">av_adj_rand_dist</span><span class="o">=</span><span class="n">av_adj_rand_dist</span><span class="p">,</span>
+            <span class="n">fold_results</span><span class="o">=</span><span class="n">fold_clusters</span><span class="p">,</span>
+            <span class="n">rand_pairs</span><span class="o">=</span><span class="n">rand_pairs</span><span class="p">,</span>
+            <span class="n">adj_rand_pairs</span><span class="o">=</span><span class="n">adj_rand_pairs</span><span class="p">,</span>
+            <span class="n">n_folds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_folds</span><span class="p">,</span>
+            <span class="n">n_random</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_random</span>
+        <span class="p">)</span></div>
+
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_empirical_distribution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">random_assignments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]],</span>
+        <span class="n">rand_calc</span><span class="p">:</span> <span class="n">RandIndex</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate empirical distribution for random assignments.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        random_assignments : list of ndarray</span>
+<span class="sd">            Random cluster assignments for each fold</span>
+<span class="sd">        rand_calc : RandIndex</span>
+<span class="sd">            Rand index calculator</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        av_rand_dist : ndarray</span>
+<span class="sd">            Sorted distribution of average Rand indices</span>
+<span class="sd">        av_adj_rand_dist : ndarray</span>
+<span class="sd">            Sorted distribution of average adjusted Rand indices</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_random</span> <span class="o">=</span> <span class="n">random_assignments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">av_rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+        <span class="n">av_adj_rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+        
+        <span class="c1"># Process in parallel if requested</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">av_rand_dist</span><span class="p">,</span> <span class="n">av_adj_rand_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parallel_empirical_dist</span><span class="p">(</span>
+                <span class="n">random_assignments</span><span class="p">,</span> <span class="n">rand_calc</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Sequential processing</span>
+            <span class="k">for</span> <span class="n">r_count</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_random</span><span class="p">):</span>
+                <span class="n">sum_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">sum_adj_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">n_pairs</span> <span class="o">=</span> <span class="mi">0</span>
+                
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_fold_run</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_fold_run</span><span class="p">):</span>
+                        <span class="n">rand</span><span class="p">,</span> <span class="n">adj_rand</span> <span class="o">=</span> <span class="n">rand_calc</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span>
+                            <span class="n">random_assignments</span><span class="p">[</span><span class="n">i</span><span class="p">][:,</span> <span class="n">r_count</span><span class="p">],</span>
+                            <span class="n">random_assignments</span><span class="p">[</span><span class="n">j</span><span class="p">][:,</span> <span class="n">r_count</span><span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="n">sum_rand</span> <span class="o">+=</span> <span class="n">rand</span>
+                        <span class="n">sum_adj_rand</span> <span class="o">+=</span> <span class="n">adj_rand</span>
+                        <span class="n">n_pairs</span> <span class="o">+=</span> <span class="mi">1</span>
+                        
+                <span class="n">av_rand_dist</span><span class="p">[</span><span class="n">r_count</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_rand</span> <span class="o">/</span> <span class="n">n_pairs</span>
+                <span class="n">av_adj_rand_dist</span><span class="p">[</span><span class="n">r_count</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_adj_rand</span> <span class="o">/</span> <span class="n">n_pairs</span>
+                
+        <span class="c1"># Sort distributions</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">av_rand_dist</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">av_adj_rand_dist</span><span class="p">)</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parallel_empirical_dist</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">random_assignments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]],</span>
+        <span class="n">rand_calc</span><span class="p">:</span> <span class="n">RandIndex</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate empirical distribution in parallel.&quot;&quot;&quot;</span>
+        <span class="n">n_random</span> <span class="o">=</span> <span class="n">random_assignments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">av_rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+        <span class="n">av_adj_rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+        
+        <span class="c1"># Determine number of workers</span>
+        <span class="n">n_workers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span>
+        <span class="k">if</span> <span class="n">n_workers</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">n_workers</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Use all available CPUs</span>
+            
+        <span class="k">def</span><span class="w"> </span><span class="nf">compute_random_sample</span><span class="p">(</span><span class="n">r_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Compute Rand indices for one random sample.&quot;&quot;&quot;</span>
+            <span class="n">sum_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">sum_adj_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">n_pairs</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_fold_run</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_fold_run</span><span class="p">):</span>
+                    <span class="n">rand</span><span class="p">,</span> <span class="n">adj_rand</span> <span class="o">=</span> <span class="n">rand_calc</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span>
+                        <span class="n">random_assignments</span><span class="p">[</span><span class="n">i</span><span class="p">][:,</span> <span class="n">r_idx</span><span class="p">],</span>
+                        <span class="n">random_assignments</span><span class="p">[</span><span class="n">j</span><span class="p">][:,</span> <span class="n">r_idx</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">sum_rand</span> <span class="o">+=</span> <span class="n">rand</span>
+                    <span class="n">sum_adj_rand</span> <span class="o">+=</span> <span class="n">adj_rand</span>
+                    <span class="n">n_pairs</span> <span class="o">+=</span> <span class="mi">1</span>
+                    
+            <span class="k">return</span> <span class="n">sum_rand</span> <span class="o">/</span> <span class="n">n_pairs</span><span class="p">,</span> <span class="n">sum_adj_rand</span> <span class="o">/</span> <span class="n">n_pairs</span>
+            
+        <span class="c1"># Execute in parallel</span>
+        <span class="k">with</span> <span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">n_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">futures</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">compute_random_sample</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span> <span class="n">i</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+            <span class="p">}</span>
+            
+            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+                <span class="n">av_rand</span><span class="p">,</span> <span class="n">av_adj_rand</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="n">av_rand_dist</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">av_rand</span>
+                <span class="n">av_adj_rand_dist</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">av_adj_rand</span>
+                
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">av_rand_dist</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">av_adj_rand_dist</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">k_fold_validate</span><span class="p">(</span>
+    <span class="n">swm</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">min_items</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">n_runs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">n_folds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">n_random</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">max_fold_run</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;v1&#39;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KFoldResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience function for k-fold validation (MATLAB-compatible interface).</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    swm : ndarray of shape (n_items, n_items)</span>
+<span class="sd">        Product x product switching matrix</span>
+<span class="sd">    n_clusters : int</span>
+<span class="sd">        Number of clusters</span>
+<span class="sd">    min_items : int, default=1</span>
+<span class="sd">        Minimum number of items per cluster</span>
+<span class="sd">    n_runs : int, default=10</span>
+<span class="sd">        Number of SUBMARIT runs for each optimization</span>
+<span class="sd">    n_folds : int, default=5</span>
+<span class="sd">        Number of folds</span>
+<span class="sd">    n_random : int, default=0</span>
+<span class="sd">        Number of random permutations for empirical distribution</span>
+<span class="sd">    max_fold_run : int, optional</span>
+<span class="sd">        Maximum number of folds to run</span>
+<span class="sd">    random_state : int, optional</span>
+<span class="sd">        Random seed</span>
+<span class="sd">    algorithm : {&#39;v1&#39;, &#39;v2&#39;}, default=&#39;v1&#39;</span>
+<span class="sd">        Which algorithm version to use</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result : KFoldResult</span>
+<span class="sd">        Cross-validation results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">KFoldValidator</span><span class="p">(</span>
+        <span class="n">n_folds</span><span class="o">=</span><span class="n">n_folds</span><span class="p">,</span>
+        <span class="n">n_random</span><span class="o">=</span><span class="n">n_random</span><span class="p">,</span>
+        <span class="n">max_fold_run</span><span class="o">=</span><span class="n">max_fold_run</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span>
+        <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span>
+    <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_items</span><span class="p">,</span> <span class="n">n_runs</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, SUBMARIT Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

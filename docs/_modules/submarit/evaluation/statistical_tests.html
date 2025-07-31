@@ -1,0 +1,480 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>submarit.evaluation.statistical_tests &mdash; SUBMARIT 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SUBMARIT
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../algorithms.html">Algorithm Theory and Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance.html">Performance Tuning Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../migration_guide.html">MATLAB to Python Migration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">Frequently Asked Questions (FAQ)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SUBMARIT</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">submarit.evaluation.statistical_tests</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for submarit.evaluation.statistical_tests</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Statistical tests and utilities for SUBMARIT evaluation.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation.cluster_evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClusterEvaluationResult</span>
+
+
+<div class="viewcode-block" id="StatisticalTests">
+<a class="viewcode-back" href="../../../api.html#submarit.evaluation.statistical_tests.StatisticalTests">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StatisticalTests</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Statistical testing utilities for cluster evaluation.&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="StatisticalTests.permutation_test">
+<a class="viewcode-back" href="../../../api.html#submarit.evaluation.statistical_tests.StatisticalTests.permutation_test">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">permutation_test</span><span class="p">(</span>
+        <span class="n">swm</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+        <span class="n">assign1</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">],</span>
+        <span class="n">assign2</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">],</span>
+        <span class="n">n_permutations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;z_value&quot;</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform permutation test to compare two clustering solutions.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            swm: Switching matrix</span>
+<span class="sd">            assign1: First cluster assignment</span>
+<span class="sd">            assign2: Second cluster assignment</span>
+<span class="sd">            n_permutations: Number of permutations</span>
+<span class="sd">            metric: Metric to compare (&#39;z_value&#39;, &#39;diff&#39;, &#39;log_lh&#39;)</span>
+<span class="sd">            random_state: Random seed</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with test statistics and p-value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation.cluster_evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClusterEvaluator</span>
+        
+        <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+            
+        <span class="n">evaluator</span> <span class="o">=</span> <span class="n">ClusterEvaluator</span><span class="p">()</span>
+        <span class="n">n_clusters1</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">assign1</span><span class="p">))</span>
+        <span class="n">n_clusters2</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">assign2</span><span class="p">))</span>
+        
+        <span class="c1"># Evaluate original assignments</span>
+        <span class="n">result1</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters1</span><span class="p">,</span> <span class="n">assign1</span><span class="p">)</span>
+        <span class="n">result2</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters2</span><span class="p">,</span> <span class="n">assign2</span><span class="p">)</span>
+        
+        <span class="c1"># Get original difference</span>
+        <span class="n">orig_diff</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result1</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span> <span class="o">-</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result2</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
+        
+        <span class="c1"># Perform permutations</span>
+        <span class="n">perm_diffs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">n_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">assign1</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_permutations</span><span class="p">):</span>
+            <span class="c1"># Randomly swap assignments between solutions</span>
+            <span class="n">swap_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n_items</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.5</span>
+            <span class="n">perm_assign1</span> <span class="o">=</span> <span class="n">assign1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">perm_assign2</span> <span class="o">=</span> <span class="n">assign2</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            
+            <span class="n">perm_assign1</span><span class="p">[</span><span class="n">swap_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">assign2</span><span class="p">[</span><span class="n">swap_mask</span><span class="p">]</span>
+            <span class="n">perm_assign2</span><span class="p">[</span><span class="n">swap_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">assign1</span><span class="p">[</span><span class="n">swap_mask</span><span class="p">]</span>
+            
+            <span class="c1"># Evaluate permuted assignments</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">perm_result1</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters1</span><span class="p">,</span> <span class="n">perm_assign1</span><span class="p">)</span>
+                <span class="n">perm_result2</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters2</span><span class="p">,</span> <span class="n">perm_assign2</span><span class="p">)</span>
+                <span class="n">perm_diff</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">perm_result1</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span> <span class="o">-</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">perm_result2</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
+                <span class="n">perm_diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">perm_diff</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="c1"># Skip invalid permutations</span>
+                <span class="k">continue</span>
+                
+        <span class="n">perm_diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">perm_diffs</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate p-value (two-tailed)</span>
+        <span class="n">p_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">perm_diffs</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">orig_diff</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;original_diff&quot;</span><span class="p">:</span> <span class="n">orig_diff</span><span class="p">,</span>
+            <span class="s2">&quot;p_value&quot;</span><span class="p">:</span> <span class="n">p_value</span><span class="p">,</span>
+            <span class="s2">&quot;n_permutations&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">perm_diffs</span><span class="p">),</span>
+            <span class="s2">&quot;metric&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">,</span>
+            <span class="s2">&quot;result1_value&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result1</span><span class="p">,</span> <span class="n">metric</span><span class="p">),</span>
+            <span class="s2">&quot;result2_value&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result2</span><span class="p">,</span> <span class="n">metric</span><span class="p">),</span>
+            <span class="s2">&quot;perm_mean&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">perm_diffs</span><span class="p">),</span>
+            <span class="s2">&quot;perm_std&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">perm_diffs</span><span class="p">)</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="StatisticalTests.bootstrap_confidence_interval">
+<a class="viewcode-back" href="../../../api.html#submarit.evaluation.statistical_tests.StatisticalTests.bootstrap_confidence_interval">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bootstrap_confidence_interval</span><span class="p">(</span>
+        <span class="n">swm</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+        <span class="n">cluster_assign</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">],</span>
+        <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;z_value&quot;</span><span class="p">,</span>
+        <span class="n">n_bootstrap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.95</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate bootstrap confidence intervals for evaluation metrics.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            swm: Switching matrix</span>
+<span class="sd">            cluster_assign: Cluster assignments</span>
+<span class="sd">            metric: Metric to analyze</span>
+<span class="sd">            n_bootstrap: Number of bootstrap samples</span>
+<span class="sd">            confidence: Confidence level</span>
+<span class="sd">            random_state: Random seed</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with confidence intervals and statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation.cluster_evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClusterEvaluator</span>
+        
+        <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+            
+        <span class="n">evaluator</span> <span class="o">=</span> <span class="n">ClusterEvaluator</span><span class="p">()</span>
+        <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">cluster_assign</span><span class="p">))</span>
+        <span class="n">n_items</span> <span class="o">=</span> <span class="n">swm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="c1"># Original evaluation</span>
+        <span class="n">orig_result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">cluster_assign</span><span class="p">)</span>
+        <span class="n">orig_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">orig_result</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
+        
+        <span class="c1"># Bootstrap samples</span>
+        <span class="n">bootstrap_values</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_bootstrap</span><span class="p">):</span>
+            <span class="c1"># Resample items with replacement</span>
+            <span class="n">boot_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_items</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            
+            <span class="c1"># Create bootstrap switching matrix</span>
+            <span class="n">boot_swm</span> <span class="o">=</span> <span class="n">swm</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">boot_indices</span><span class="p">,</span> <span class="n">boot_indices</span><span class="p">)]</span>
+            
+            <span class="c1"># Map cluster assignments</span>
+            <span class="n">boot_assign</span> <span class="o">=</span> <span class="n">cluster_assign</span><span class="p">[</span><span class="n">boot_indices</span><span class="p">]</span>
+            
+            <span class="c1"># Ensure all clusters are represented</span>
+            <span class="n">unique_clusters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">boot_assign</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_clusters</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n_clusters</span><span class="p">:</span>
+                <span class="k">continue</span>
+                
+            <span class="c1"># Remap to consecutive integers</span>
+            <span class="n">remap</span> <span class="o">=</span> <span class="p">{</span><span class="n">old</span><span class="p">:</span> <span class="n">new</span><span class="o">+</span><span class="mi">1</span> <span class="k">for</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_clusters</span><span class="p">)}</span>
+            <span class="n">boot_assign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">remap</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">boot_assign</span><span class="p">])</span>
+            
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">boot_result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">boot_swm</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_clusters</span><span class="p">),</span> <span class="n">boot_assign</span><span class="p">)</span>
+                <span class="n">bootstrap_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">boot_result</span><span class="p">,</span> <span class="n">metric</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">continue</span>
+                
+        <span class="n">bootstrap_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bootstrap_values</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate confidence intervals</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">confidence</span>
+        <span class="n">lower_percentile</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+        <span class="n">upper_percentile</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+        
+        <span class="n">ci_lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">bootstrap_values</span><span class="p">,</span> <span class="n">lower_percentile</span><span class="p">)</span>
+        <span class="n">ci_upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">bootstrap_values</span><span class="p">,</span> <span class="n">upper_percentile</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;metric&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">,</span>
+            <span class="s2">&quot;original_value&quot;</span><span class="p">:</span> <span class="n">orig_value</span><span class="p">,</span>
+            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">bootstrap_values</span><span class="p">),</span>
+            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">bootstrap_values</span><span class="p">),</span>
+            <span class="s2">&quot;ci_lower&quot;</span><span class="p">:</span> <span class="n">ci_lower</span><span class="p">,</span>
+            <span class="s2">&quot;ci_upper&quot;</span><span class="p">:</span> <span class="n">ci_upper</span><span class="p">,</span>
+            <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="n">confidence</span><span class="p">,</span>
+            <span class="s2">&quot;n_bootstrap&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bootstrap_values</span><span class="p">)</span>
+        <span class="p">}</span></div>
+
+    
+<div class="viewcode-block" id="StatisticalTests.stability_analysis">
+<a class="viewcode-back" href="../../../api.html#submarit.evaluation.statistical_tests.StatisticalTests.stability_analysis">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stability_analysis</span><span class="p">(</span>
+        <span class="n">swm</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+        <span class="n">cluster_func</span><span class="p">,</span>
+        <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">n_runs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">min_items</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze stability of clustering results across multiple runs.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            swm: Switching matrix</span>
+<span class="sd">            cluster_func: Clustering function</span>
+<span class="sd">            n_clusters: Number of clusters</span>
+<span class="sd">            n_runs: Number of runs to perform</span>
+<span class="sd">            min_items: Minimum items per cluster</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with stability metrics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">submarit.evaluation.cluster_evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClusterEvaluator</span>
+        
+        <span class="n">evaluator</span> <span class="o">=</span> <span class="n">ClusterEvaluator</span><span class="p">()</span>
+        
+        <span class="c1"># Store results from multiple runs</span>
+        <span class="n">z_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">log_lh_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">diff_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">assignments</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_runs</span><span class="p">):</span>
+            <span class="c1"># Run clustering</span>
+            <span class="n">cluster_result</span> <span class="o">=</span> <span class="n">cluster_func</span><span class="p">(</span><span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_items</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            
+            <span class="c1"># Evaluate</span>
+            <span class="n">eval_result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">cluster_result</span><span class="o">.</span><span class="n">assign</span><span class="p">)</span>
+            
+            <span class="n">z_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eval_result</span><span class="o">.</span><span class="n">z_value</span><span class="p">)</span>
+            <span class="n">log_lh_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eval_result</span><span class="o">.</span><span class="n">log_lh</span><span class="p">)</span>
+            <span class="n">diff_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eval_result</span><span class="o">.</span><span class="n">diff</span><span class="p">)</span>
+            <span class="n">assignments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cluster_result</span><span class="o">.</span><span class="n">assign</span><span class="p">)</span>
+            
+        <span class="c1"># Calculate stability metrics</span>
+        <span class="n">z_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">z_values</span><span class="p">)</span>
+        <span class="n">log_lh_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">log_lh_values</span><span class="p">)</span>
+        <span class="n">diff_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">diff_values</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate pairwise agreement between assignments</span>
+        <span class="n">n_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">assignments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">agreement_scores</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_runs</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_runs</span><span class="p">):</span>
+                <span class="c1"># Calculate Rand index or similar</span>
+                <span class="n">agreement</span> <span class="o">=</span> <span class="n">StatisticalTests</span><span class="o">.</span><span class="n">_calculate_agreement</span><span class="p">(</span>
+                    <span class="n">assignments</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">assignments</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">agreement_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">agreement</span><span class="p">)</span>
+                
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;z_value_mean&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">z_values</span><span class="p">),</span>
+            <span class="s2">&quot;z_value_std&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">z_values</span><span class="p">),</span>
+            <span class="s2">&quot;z_value_cv&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">z_values</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">z_values</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">),</span>
+            <span class="s2">&quot;log_lh_mean&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">log_lh_values</span><span class="p">),</span>
+            <span class="s2">&quot;log_lh_std&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">log_lh_values</span><span class="p">),</span>
+            <span class="s2">&quot;diff_mean&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">diff_values</span><span class="p">),</span>
+            <span class="s2">&quot;diff_std&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">diff_values</span><span class="p">),</span>
+            <span class="s2">&quot;mean_agreement&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">agreement_scores</span><span class="p">)</span> <span class="k">if</span> <span class="n">agreement_scores</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;min_agreement&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">agreement_scores</span><span class="p">)</span> <span class="k">if</span> <span class="n">agreement_scores</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;n_runs&quot;</span><span class="p">:</span> <span class="n">n_runs</span>
+        <span class="p">}</span></div>
+
+    
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_agreement</span><span class="p">(</span><span class="n">assign1</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">],</span> <span class="n">assign2</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate agreement between two cluster assignments (simplified Rand index).&quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">assign1</span><span class="p">)</span>
+        <span class="n">agreements</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+                <span class="c1"># Check if pair is in same cluster in both assignments</span>
+                <span class="n">same1</span> <span class="o">=</span> <span class="n">assign1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">assign1</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">same2</span> <span class="o">=</span> <span class="n">assign2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">assign2</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">same1</span> <span class="o">==</span> <span class="n">same2</span><span class="p">:</span>
+                    <span class="n">agreements</span> <span class="o">+=</span> <span class="mi">1</span>
+                    
+        <span class="n">total_pairs</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">agreements</span> <span class="o">/</span> <span class="n">total_pairs</span> <span class="k">if</span> <span class="n">total_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    
+<div class="viewcode-block" id="StatisticalTests.cluster_validity_indices">
+<a class="viewcode-back" href="../../../api.html#submarit.evaluation.statistical_tests.StatisticalTests.cluster_validity_indices">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cluster_validity_indices</span><span class="p">(</span>
+        <span class="n">swm</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+        <span class="n">cluster_assign</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate various cluster validity indices.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            swm: Switching matrix</span>
+<span class="sd">            cluster_assign: Cluster assignments</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with validity indices</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_items</span> <span class="o">=</span> <span class="n">swm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">cluster_assign</span><span class="p">))</span>
+        
+        <span class="c1"># Calculate within-cluster and between-cluster switching</span>
+        <span class="n">within_switching</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">between_switching</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_items</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_items</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">cluster_assign</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">cluster_assign</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                    <span class="n">within_switching</span> <span class="o">+=</span> <span class="n">swm</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">between_switching</span> <span class="o">+=</span> <span class="n">swm</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+                    
+        <span class="n">total_switching</span> <span class="o">=</span> <span class="n">within_switching</span> <span class="o">+</span> <span class="n">between_switching</span>
+        
+        <span class="c1"># Silhouette-like coefficient for switching data</span>
+        <span class="n">silhouette_values</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_items</span><span class="p">):</span>
+            <span class="c1"># Average switching to items in same cluster</span>
+            <span class="n">same_cluster</span> <span class="o">=</span> <span class="n">cluster_assign</span> <span class="o">==</span> <span class="n">cluster_assign</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">same_cluster</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Exclude self</span>
+            
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">same_cluster</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">a_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">swm</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">same_cluster</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">a_i</span> <span class="o">=</span> <span class="mi">0</span>
+                
+            <span class="c1"># Average switching to items in other clusters</span>
+            <span class="n">b_values</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_clusters</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="o">!=</span> <span class="n">cluster_assign</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="n">other_cluster</span> <span class="o">=</span> <span class="n">cluster_assign</span> <span class="o">==</span> <span class="n">c</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">other_cluster</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">b_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">swm</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">other_cluster</span><span class="p">]))</span>
+                        
+            <span class="n">b_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">b_values</span><span class="p">)</span> <span class="k">if</span> <span class="n">b_values</span> <span class="k">else</span> <span class="mi">0</span>
+            
+            <span class="c1"># Silhouette coefficient</span>
+            <span class="n">s_i</span> <span class="o">=</span> <span class="p">(</span><span class="n">b_i</span> <span class="o">-</span> <span class="n">a_i</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">a_i</span><span class="p">,</span> <span class="n">b_i</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+            <span class="n">silhouette_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s_i</span><span class="p">)</span>
+            
+        <span class="c1"># Dunn-like index</span>
+        <span class="n">min_between</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="n">max_within</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">c1</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_clusters</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">cluster1</span> <span class="o">=</span> <span class="n">cluster_assign</span> <span class="o">==</span> <span class="n">c1</span>
+            
+            <span class="c1"># Within-cluster maximum</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cluster1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">within_swm</span> <span class="o">=</span> <span class="n">swm</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">cluster1</span><span class="p">,</span> <span class="n">cluster1</span><span class="p">)]</span>
+                <span class="n">max_within</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_within</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">within_swm</span><span class="p">))</span>
+                
+            <span class="c1"># Between-cluster minimum</span>
+            <span class="k">for</span> <span class="n">c2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">c1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_clusters</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">cluster2</span> <span class="o">=</span> <span class="n">cluster_assign</span> <span class="o">==</span> <span class="n">c2</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cluster1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cluster2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">between_swm</span> <span class="o">=</span> <span class="n">swm</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">cluster1</span><span class="p">,</span> <span class="n">cluster2</span><span class="p">)]</span>
+                    <span class="n">min_between</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">min_between</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">between_swm</span><span class="p">[</span><span class="n">between_swm</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]))</span>
+                    
+        <span class="n">dunn_index</span> <span class="o">=</span> <span class="n">min_between</span> <span class="o">/</span> <span class="p">(</span><span class="n">max_within</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="k">if</span> <span class="n">max_within</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;within_switching_ratio&quot;</span><span class="p">:</span> <span class="n">within_switching</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_switching</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">),</span>
+            <span class="s2">&quot;between_switching_ratio&quot;</span><span class="p">:</span> <span class="n">between_switching</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_switching</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">),</span>
+            <span class="s2">&quot;silhouette_coefficient&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">silhouette_values</span><span class="p">),</span>
+            <span class="s2">&quot;dunn_index&quot;</span><span class="p">:</span> <span class="n">dunn_index</span><span class="p">,</span>
+            <span class="s2">&quot;n_clusters&quot;</span><span class="p">:</span> <span class="n">n_clusters</span><span class="p">,</span>
+            <span class="s2">&quot;n_items&quot;</span><span class="p">:</span> <span class="n">n_items</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, SUBMARIT Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

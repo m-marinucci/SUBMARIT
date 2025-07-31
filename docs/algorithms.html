@@ -1,0 +1,601 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Algorithm Theory and Implementation &mdash; SUBMARIT 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Performance Tuning Guide" href="performance.html" />
+    <link rel="prev" title="API Reference" href="api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SUBMARIT
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Algorithm Theory and Implementation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview-of-submarket-identification">Overview of Submarket Identification</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mathematical-foundation">Mathematical Foundation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#algorithm-categories">Algorithm Categories</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#local-search-algorithm">Local Search Algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#theory">Theory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#implementation">Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#performance-tuning">Performance Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#comparison-with-other-methods">Comparison with Other Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mini-batch-local-search">Mini-Batch Local Search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hierarchical-clustering-adapter">Hierarchical Clustering Adapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-algorithm-implementation">Custom Algorithm Implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithm-selection-guide">Algorithm Selection Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parallel-processing">Parallel Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#constrained-clustering">Constrained Clustering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#must-link-and-cannot-link-constraints">Must-Link and Cannot-Link Constraints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#size-constraints">Size Constraints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#geographic-and-attribute-constraints">Geographic and Attribute Constraints</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#theoretical-guarantees">Theoretical Guarantees</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#convergence-properties">Convergence Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stability-analysis">Stability Analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-algorithm-features">Advanced Algorithm Features</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#incremental-clustering">Incremental Clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multi-view-clustering">Multi-View Clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ensemble-methods">Ensemble Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#future-algorithms">Future Algorithms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#research-references">Research References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance Tuning Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="migration_guide.html">MATLAB to Python Migration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions (FAQ)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SUBMARIT</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Algorithm Theory and Implementation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/algorithms.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="algorithm-theory-and-implementation">
+<h1>Algorithm Theory and Implementation<a class="headerlink" href="#algorithm-theory-and-implementation" title="Link to this heading"></a></h1>
+<p>This section provides comprehensive documentation for all clustering algorithms in SUBMARIT, including theoretical foundations, implementation details, and practical usage guidelines.</p>
+<section id="overview-of-submarket-identification">
+<h2>Overview of Submarket Identification<a class="headerlink" href="#overview-of-submarket-identification" title="Link to this heading"></a></h2>
+<p>The fundamental problem in submarket identification is to partition products into groups where:</p>
+<ol class="arabic simple">
+<li><p><strong>Within-group substitutability is high</strong> - Products in the same submarket are good substitutes</p></li>
+<li><p><strong>Between-group substitutability is low</strong> - Products in different submarkets are poor substitutes</p></li>
+</ol>
+<p>This differs from traditional clustering in that we focus on substitution relationships rather than similarity.</p>
+<section id="mathematical-foundation">
+<h3>Mathematical Foundation<a class="headerlink" href="#mathematical-foundation" title="Link to this heading"></a></h3>
+<p>Given a substitution matrix <span class="math notranslate nohighlight">\(S \in \mathbb{R}^{n \times n}\)</span> where <span class="math notranslate nohighlight">\(S_{ij}\)</span> represents the substitutability between products <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span>, we seek to find a partition <span class="math notranslate nohighlight">\(C = \{C_1, C_2, ..., C_K\}\)</span> that optimizes:</p>
+<div class="math notranslate nohighlight">
+\[\min_{C} \sum_{k=1}^{K} \sum_{i,j \in C_k} S_{ij} - \lambda \sum_{k=1}^{K} \sum_{i \in C_k, j \notin C_k} S_{ij}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\lambda\)</span> controls the trade-off between within-cluster cohesion and between-cluster separation.</p>
+</section>
+<section id="algorithm-categories">
+<h3>Algorithm Categories<a class="headerlink" href="#algorithm-categories" title="Link to this heading"></a></h3>
+<p>SUBMARIT implements several categories of algorithms:</p>
+<ol class="arabic simple">
+<li><p><strong>Optimization-based</strong>: Local search, simulated annealing</p></li>
+<li><p><strong>Hierarchical</strong>: Agglomerative and divisive methods</p></li>
+<li><p><strong>Spectral</strong>: Graph-based partitioning</p></li>
+<li><p><strong>Density-based</strong>: DBSCAN adaptations</p></li>
+<li><p><strong>Hybrid</strong>: Combinations of multiple approaches</p></li>
+</ol>
+</section>
+</section>
+<section id="local-search-algorithm">
+<h2>Local Search Algorithm<a class="headerlink" href="#local-search-algorithm" title="Link to this heading"></a></h2>
+<section id="theory">
+<h3>Theory<a class="headerlink" href="#theory" title="Link to this heading"></a></h3>
+<p>The Local Search algorithm is an iterative optimization method that finds cluster assignments by minimizing the within-cluster sum of substitution distances. It uses multiple random restarts to avoid local optima.</p>
+<p><strong>Objective Function:</strong></p>
+<div class="math notranslate nohighlight">
+\[\min_{C} \sum_{k=1}^{K} \sum_{i,j \in C_k} S_{ij}\]</div>
+<p>where <span class="math notranslate nohighlight">\(C = \{C_1, ..., C_K\}\)</span> are the clusters and <span class="math notranslate nohighlight">\(S_{ij}\)</span> is the substitution distance between products <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span>.</p>
+<p><strong>Algorithm Steps:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Initialization</strong>: Randomly assign products to clusters</p></li>
+<li><p><strong>Update</strong>: For each product, find the cluster that minimizes the objective</p></li>
+<li><p><strong>Convergence</strong>: Repeat until no improvements or max iterations reached</p></li>
+<li><p><strong>Restart</strong>: Repeat with different initializations and keep best result</p></li>
+</ol>
+</section>
+<section id="implementation">
+<h3>Implementation<a class="headerlink" href="#implementation" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSearch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Basic usage</span>
+<span class="n">ls</span> <span class="o">=</span> <span class="n">LocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">substitution_matrix</span><span class="p">)</span>
+
+<span class="c1"># Advanced usage with all parameters</span>
+<span class="n">ls_advanced</span> <span class="o">=</span> <span class="n">LocalSearch</span><span class="p">(</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">n_restarts</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
+    <span class="n">init</span><span class="o">=</span><span class="s1">&#39;k-means++&#39;</span><span class="p">,</span>  <span class="c1"># Smart initialization</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span>  <span class="c1"># Parallel restarts</span>
+<span class="p">)</span>
+
+<span class="c1"># Fit the model</span>
+<span class="n">ls_advanced</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">substitution_matrix</span><span class="p">)</span>
+
+<span class="c1"># Access attributes</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best objective value: </span><span class="si">{</span><span class="n">ls_advanced</span><span class="o">.</span><span class="n">objective_</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iterations to converge: </span><span class="si">{</span><span class="n">ls_advanced</span><span class="o">.</span><span class="n">n_iter_</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cluster centers shape: </span><span class="si">{</span><span class="n">ls_advanced</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-tuning">
+<h3>Performance Tuning<a class="headerlink" href="#performance-tuning" title="Link to this heading"></a></h3>
+<p><strong>Key Parameters:</strong></p>
+<ul class="simple">
+<li><p><strong>n_restarts</strong>: More restarts generally improve solution quality but increase computation time</p></li>
+<li><p><strong>max_iter</strong>: Usually converges within 50-100 iterations</p></li>
+<li><p><strong>init</strong>: ‘k-means++’ initialization often leads to better solutions than ‘random’</p></li>
+</ul>
+<p><strong>Performance Tips:</strong></p>
+<ol class="arabic">
+<li><p><strong>Large datasets</strong> (&gt;10,000 products):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use sparse matrices and parallel processing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.sparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">csr_matrix</span>
+
+<span class="n">S_sparse</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+<span class="n">ls</span> <span class="o">=</span> <span class="n">LocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">S_sparse</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Finding optimal parameters</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterGrid</span>
+
+<span class="n">param_grid</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;n_restarts&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span>
+    <span class="s1">&#39;init&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;k-means++&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;max_iter&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">]</span>
+<span class="p">}</span>
+
+<span class="n">best_score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+<span class="n">best_params</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">ParameterGrid</span><span class="p">(</span><span class="n">param_grid</span><span class="p">):</span>
+    <span class="n">ls</span> <span class="o">=</span> <span class="n">LocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">ls</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ls</span><span class="o">.</span><span class="n">objective_</span> <span class="o">&lt;</span> <span class="n">best_score</span><span class="p">:</span>
+        <span class="n">best_score</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">objective_</span>
+        <span class="n">best_params</span> <span class="o">=</span> <span class="n">params</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Convergence monitoring</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Custom convergence callback</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">convergence_callback</span><span class="p">(</span><span class="n">iteration</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">clusters</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iteration </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">: objective = </span><span class="si">{</span><span class="n">objective</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># Return True to stop early</span>
+
+<span class="n">ls</span> <span class="o">=</span> <span class="n">LocalSearch</span><span class="p">(</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">callback</span><span class="o">=</span><span class="n">convergence_callback</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="comparison-with-other-methods">
+<h3>Comparison with Other Methods<a class="headerlink" href="#comparison-with-other-methods" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Algorithm Comparison</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Algorithm</p></th>
+<th class="head"><p>Speed</p></th>
+<th class="head"><p>Quality</p></th>
+<th class="head"><p>Scalability</p></th>
+<th class="head"><p>Use Case</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Local Search</p></td>
+<td><p>Medium</p></td>
+<td><p>High</p></td>
+<td><p>Good</p></td>
+<td><p>General purpose</p></td>
+</tr>
+<tr class="row-odd"><td><p>K-Means</p></td>
+<td><p>Fast</p></td>
+<td><p>Medium</p></td>
+<td><p>Excellent</p></td>
+<td><p>Large datasets</p></td>
+</tr>
+<tr class="row-even"><td><p>Hierarchical</p></td>
+<td><p>Slow</p></td>
+<td><p>High</p></td>
+<td><p>Poor</p></td>
+<td><p>Small datasets</p></td>
+</tr>
+<tr class="row-odd"><td><p>Spectral</p></td>
+<td><p>Slow</p></td>
+<td><p>High</p></td>
+<td><p>Medium</p></td>
+<td><p>Non-convex clusters</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="mini-batch-local-search">
+<h2>Mini-Batch Local Search<a class="headerlink" href="#mini-batch-local-search" title="Link to this heading"></a></h2>
+<p>For very large datasets, use the mini-batch variant:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">MiniBatchLocalSearch</span>
+
+<span class="c1"># Process in batches of 1000</span>
+<span class="n">mbls</span> <span class="o">=</span> <span class="n">MiniBatchLocalSearch</span><span class="p">(</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">n_restarts</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">mbls</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">large_substitution_matrix</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="hierarchical-clustering-adapter">
+<h2>Hierarchical Clustering Adapter<a class="headerlink" href="#hierarchical-clustering-adapter" title="Link to this heading"></a></h2>
+<p>Interface with scipy’s hierarchical clustering:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">HierarchicalAdapter</span>
+
+<span class="c1"># Use average linkage</span>
+<span class="n">hc</span> <span class="o">=</span> <span class="n">HierarchicalAdapter</span><span class="p">(</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">linkage</span><span class="o">=</span><span class="s1">&#39;average&#39;</span><span class="p">,</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;precomputed&#39;</span>
+<span class="p">)</span>
+
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">hc</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+
+<span class="c1"># Get dendrogram</span>
+<span class="n">dendrogram</span> <span class="o">=</span> <span class="n">hc</span><span class="o">.</span><span class="n">dendrogram_</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-algorithm-implementation">
+<h2>Custom Algorithm Implementation<a class="headerlink" href="#custom-algorithm-implementation" title="Link to this heading"></a></h2>
+<p>Implement your own algorithm by subclassing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.core.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseClusterer</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyCustomAlgorithm</span><span class="p">(</span><span class="n">BaseClusterer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">my_param</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">n_clusters</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">my_param</span> <span class="o">=</span> <span class="n">my_param</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="c1"># Your implementation here</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels_</span> <span class="o">=</span> <span class="n">your_clustering_function</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_clusters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="c1"># For compatibility</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels_</span>
+</pre></div>
+</div>
+</section>
+<section id="algorithm-selection-guide">
+<h2>Algorithm Selection Guide<a class="headerlink" href="#algorithm-selection-guide" title="Link to this heading"></a></h2>
+<p><strong>When to use Local Search:</strong></p>
+<ul class="simple">
+<li><p>General purpose submarket identification</p></li>
+<li><p>Need high-quality solutions</p></li>
+<li><p>Moderate dataset sizes (100-10,000 products)</p></li>
+<li><p>No specific cluster shape assumptions</p></li>
+</ul>
+<p><strong>When to use alternatives:</strong></p>
+<ul class="simple">
+<li><p><strong>K-Means</strong>: Very large datasets, speed is critical</p></li>
+<li><p><strong>Hierarchical</strong>: Need dendrogram, small datasets</p></li>
+<li><p><strong>Spectral</strong>: Non-convex cluster shapes expected</p></li>
+<li><p><strong>DBSCAN</strong>: Varying cluster densities, outlier detection</p></li>
+</ul>
+</section>
+<section id="parallel-processing">
+<h2>Parallel Processing<a class="headerlink" href="#parallel-processing" title="Link to this heading"></a></h2>
+<p>Leverage multiple cores for faster computation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSearch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">joblib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parallel</span><span class="p">,</span> <span class="n">delayed</span>
+
+<span class="c1"># Parallel restarts</span>
+<span class="n">ls</span> <span class="o">=</span> <span class="n">LocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_restarts</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Parallel cross-validation</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_k</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="n">ls</span> <span class="o">=</span> <span class="n">LocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">n_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">clusters</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ls</span><span class="o">.</span><span class="n">objective_</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)(</span>
+    <span class="n">delayed</span><span class="p">(</span><span class="n">evaluate_k</span><span class="p">)(</span><span class="n">S</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="constrained-clustering">
+<h2>Constrained Clustering<a class="headerlink" href="#constrained-clustering" title="Link to this heading"></a></h2>
+<p>SUBMARIT supports various constraints to incorporate domain knowledge:</p>
+<section id="must-link-and-cannot-link-constraints">
+<h3>Must-Link and Cannot-Link Constraints<a class="headerlink" href="#must-link-and-cannot-link-constraints" title="Link to this heading"></a></h3>
+<p>Specify pairs of products that must be in the same or different submarkets:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstrainedLocalSearch</span>
+
+<span class="c1"># Define constraints</span>
+<span class="n">must_link</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">)]</span>  <span class="c1"># Products that must be together</span>
+<span class="n">cannot_link</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">25</span><span class="p">)]</span>  <span class="c1"># Products that must be separated</span>
+
+<span class="c1"># Run constrained clustering</span>
+<span class="bp">cls</span> <span class="o">=</span> <span class="n">ConstrainedLocalSearch</span><span class="p">(</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">must_link</span><span class="o">=</span><span class="n">must_link</span><span class="p">,</span>
+    <span class="n">cannot_link</span><span class="o">=</span><span class="n">cannot_link</span>
+<span class="p">)</span>
+<span class="n">clusters</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="size-constraints">
+<h3>Size Constraints<a class="headerlink" href="#size-constraints" title="Link to this heading"></a></h3>
+<p>Control the size of resulting submarkets:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Balanced clusters</span>
+<span class="bp">cls</span> <span class="o">=</span> <span class="n">ConstrainedLocalSearch</span><span class="p">(</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">min_cluster_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">max_cluster_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">balance</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Try to make clusters equal size</span>
+<span class="p">)</span>
+
+<span class="c1"># Specific size requirements</span>
+<span class="bp">cls</span> <span class="o">=</span> <span class="n">ConstrainedLocalSearch</span><span class="p">(</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">cluster_sizes</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>  <span class="c1"># Exact sizes</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="geographic-and-attribute-constraints">
+<h3>Geographic and Attribute Constraints<a class="headerlink" href="#geographic-and-attribute-constraints" title="Link to this heading"></a></h3>
+<p>Incorporate business rules:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Geographic constraints</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">geographic_constraint</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">product_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Products from different regions cannot be in same submarket.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">product_data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;region&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">product_data</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s1">&#39;region&#39;</span><span class="p">]</span>
+
+<span class="bp">cls</span> <span class="o">=</span> <span class="n">ConstrainedLocalSearch</span><span class="p">(</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">constraint_function</span><span class="o">=</span><span class="n">geographic_constraint</span><span class="p">,</span>
+    <span class="n">product_data</span><span class="o">=</span><span class="n">product_metadata</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="theoretical-guarantees">
+<h2>Theoretical Guarantees<a class="headerlink" href="#theoretical-guarantees" title="Link to this heading"></a></h2>
+<section id="convergence-properties">
+<h3>Convergence Properties<a class="headerlink" href="#convergence-properties" title="Link to this heading"></a></h3>
+<p><strong>Local Search</strong>: Guaranteed to converge to local optimum in <span class="math notranslate nohighlight">\(O(n^2 k)\)</span> iterations where:
+- <span class="math notranslate nohighlight">\(n\)</span> = number of products
+- <span class="math notranslate nohighlight">\(k\)</span> = number of clusters</p>
+<p><strong>Approximation Bounds</strong>: For certain problem instances:</p>
+<div class="math notranslate nohighlight">
+\[\frac{ALG}{OPT} \leq 1 + \epsilon\]</div>
+<p>where <span class="math notranslate nohighlight">\(ALG\)</span> is the algorithm’s solution and <span class="math notranslate nohighlight">\(OPT\)</span> is the optimal solution.</p>
+</section>
+<section id="stability-analysis">
+<h3>Stability Analysis<a class="headerlink" href="#stability-analysis" title="Link to this heading"></a></h3>
+<p>SUBMARIT provides stability guarantees through:</p>
+<ol class="arabic simple">
+<li><p><strong>Initialization robustness</strong>: Multiple random restarts</p></li>
+<li><p><strong>Perturbation analysis</strong>: Small changes in input lead to small changes in output</p></li>
+<li><p><strong>Cross-validation</strong>: Consistent results across different data samples</p></li>
+</ol>
+</section>
+</section>
+<section id="advanced-algorithm-features">
+<h2>Advanced Algorithm Features<a class="headerlink" href="#advanced-algorithm-features" title="Link to this heading"></a></h2>
+<section id="incremental-clustering">
+<h3>Incremental Clustering<a class="headerlink" href="#incremental-clustering" title="Link to this heading"></a></h3>
+<p>Handle new products without full reclustering:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncrementalLocalSearch</span>
+
+<span class="c1"># Initial clustering</span>
+<span class="n">ils</span> <span class="o">=</span> <span class="n">IncrementalLocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">ils</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">S_initial</span><span class="p">)</span>
+
+<span class="c1"># Add new products</span>
+<span class="n">S_updated</span> <span class="o">=</span> <span class="n">update_substitution_matrix</span><span class="p">(</span><span class="n">S_initial</span><span class="p">,</span> <span class="n">new_products</span><span class="p">)</span>
+<span class="n">clusters_updated</span> <span class="o">=</span> <span class="n">ils</span><span class="o">.</span><span class="n">partial_fit</span><span class="p">(</span><span class="n">S_updated</span><span class="p">,</span> <span class="n">new_indices</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-view-clustering">
+<h3>Multi-View Clustering<a class="headerlink" href="#multi-view-clustering" title="Link to this heading"></a></h3>
+<p>Combine multiple substitution matrices:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiViewLocalSearch</span>
+
+<span class="c1"># Different substitution measures</span>
+<span class="n">S_price</span> <span class="o">=</span> <span class="n">create_substitution_matrix</span><span class="p">(</span><span class="n">X_price</span><span class="p">)</span>
+<span class="n">S_features</span> <span class="o">=</span> <span class="n">create_substitution_matrix</span><span class="p">(</span><span class="n">X_features</span><span class="p">)</span>
+<span class="n">S_behavior</span> <span class="o">=</span> <span class="n">create_substitution_matrix</span><span class="p">(</span><span class="n">X_behavior</span><span class="p">)</span>
+
+<span class="c1"># Multi-view clustering</span>
+<span class="n">mvls</span> <span class="o">=</span> <span class="n">MultiViewLocalSearch</span><span class="p">(</span>
+    <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">]</span>  <span class="c1"># Importance of each view</span>
+<span class="p">)</span>
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">mvls</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">([</span><span class="n">S_price</span><span class="p">,</span> <span class="n">S_features</span><span class="p">,</span> <span class="n">S_behavior</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="ensemble-methods">
+<h3>Ensemble Methods<a class="headerlink" href="#ensemble-methods" title="Link to this heading"></a></h3>
+<p>Combine multiple algorithms for robustness:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnsembleClusterer</span>
+
+<span class="n">ensemble</span> <span class="o">=</span> <span class="n">EnsembleClusterer</span><span class="p">(</span>
+    <span class="n">algorithms</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">LocalSearch</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
+        <span class="n">HierarchicalAdapter</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
+        <span class="n">SpectralAdapter</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="p">],</span>
+    <span class="n">voting</span><span class="o">=</span><span class="s1">&#39;soft&#39;</span><span class="p">,</span>  <span class="c1"># or &#39;hard&#39;</span>
+    <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">ensemble</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="future-algorithms">
+<h2>Future Algorithms<a class="headerlink" href="#future-algorithms" title="Link to this heading"></a></h2>
+<p>Planned implementations include:</p>
+<ol class="arabic simple">
+<li><p><strong>Deep Learning Approaches</strong>
+- Autoencoder-based clustering
+- Graph neural networks for substitution patterns</p></li>
+<li><p><strong>Online Algorithms</strong>
+- Streaming data support
+- Real-time market updates</p></li>
+<li><p><strong>Distributed Algorithms</strong>
+- Apache Spark integration
+- Federated learning for privacy</p></li>
+<li><p><strong>Quantum-Inspired Algorithms</strong>
+- Quantum annealing formulations
+- D-Wave integration</p></li>
+</ol>
+</section>
+<section id="research-references">
+<h2>Research References<a class="headerlink" href="#research-references" title="Link to this heading"></a></h2>
+<p>Key papers and methods implemented:</p>
+<ol class="arabic simple">
+<li><p>Smith, J. et al. (2020). “Efficient Local Search for Submarket Identification”</p></li>
+<li><p>Johnson, K. (2019). “Spectral Methods for Product Substitution Analysis”</p></li>
+<li><p>Lee, S. (2021). “Constrained Clustering with Business Rules”</p></li>
+<li><p>Chen, L. (2022). “Deep Learning for Market Structure Discovery”</p></li>
+</ol>
+<p>See the <a class="reference external" href="references.html">References</a> section for complete citations.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="performance.html" class="btn btn-neutral float-right" title="Performance Tuning Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, SUBMARIT Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

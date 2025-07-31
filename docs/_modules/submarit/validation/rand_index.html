@@ -1,0 +1,635 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>submarit.validation.rand_index &mdash; SUBMARIT 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SUBMARIT
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../algorithms.html">Algorithm Theory and Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance.html">Performance Tuning Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../migration_guide.html">MATLAB to Python Migration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">Frequently Asked Questions (FAQ)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SUBMARIT</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">submarit.validation.rand_index</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for submarit.validation.rand_index</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Rand index calculations and empirical distributions.</span>
+
+<span class="sd">This module implements the Rand index and adjusted Rand index for comparing</span>
+<span class="sd">clustering solutions, following the methodology from RandIndex4.m. It also</span>
+<span class="sd">provides functions for creating empirical distributions of Rand indices.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">as_completed</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.utils.matlab_compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatlabRandom</span>
+
+
+<div class="viewcode-block" id="RandIndexResult">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.RandIndexResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RandIndexResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for Rand index calculation results.</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        rand: Rand index value (0 to 1)</span>
+<span class="sd">        adj_rand: Adjusted Rand index value</span>
+<span class="sd">        a: Number of pairs in same cluster in both clusterings</span>
+<span class="sd">        b: Number of pairs in different clusters in both clusterings</span>
+<span class="sd">        c: Number of pairs in same cluster in C1, different in C2</span>
+<span class="sd">        d: Number of pairs in different cluster in C1, same in C2</span>
+<span class="sd">        n_items: Number of items compared</span>
+<span class="sd">        n_pairs: Total number of pairs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rand</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">adj_rand</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">c</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_items</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_pairs</span><span class="p">:</span> <span class="nb">int</span>
+    
+<div class="viewcode-block" id="RandIndexResult.summary">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.RandIndexResult.summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate summary of Rand index results.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Rand Index Results</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;==================</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Rand index: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Adjusted Rand index: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adj_rand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Number of items: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_items</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Total pairs: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_pairs</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Contingency table:</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;  a (agree same): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;  b (agree different): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;  c (disagree C1 same): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;  d (disagree C1 diff): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RandEmpiricalDistribution">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.RandEmpiricalDistribution">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RandEmpiricalDistribution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for Rand index empirical distribution.</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        rand_dist: Sorted array of Rand index values</span>
+<span class="sd">        adj_rand_dist: Sorted array of adjusted Rand index values</span>
+<span class="sd">        n_points: Number of points in distribution</span>
+<span class="sd">        n_items: Number of items in clusterings</span>
+<span class="sd">        n_clusters: Number of clusters</span>
+<span class="sd">        min_items: Minimum items per cluster constraint</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rand_dist</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
+    <span class="n">adj_rand_dist</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
+    <span class="n">n_points</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_items</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">min_items</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    
+<div class="viewcode-block" id="RandEmpiricalDistribution.get_percentiles">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.RandEmpiricalDistribution.get_percentiles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_percentiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">percentiles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get percentile values from the distribution.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        percentiles : array-like, optional</span>
+<span class="sd">            Percentiles to compute (0-100). Defaults to standard confidence intervals.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary with &#39;rand&#39; and &#39;adj_rand&#39; percentile values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">percentiles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">percentiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">75</span><span class="p">,</span> <span class="mi">95</span><span class="p">,</span> <span class="mf">97.5</span><span class="p">,</span> <span class="mf">99.5</span><span class="p">])</span>
+            
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">percentiles</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_points</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_points</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;rand&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rand_dist</span><span class="p">[</span><span class="n">indices</span><span class="p">],</span>
+            <span class="s1">&#39;adj_rand&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">adj_rand_dist</span><span class="p">[</span><span class="n">indices</span><span class="p">],</span>
+            <span class="s1">&#39;percentiles&#39;</span><span class="p">:</span> <span class="n">percentiles</span>
+        <span class="p">}</span></div>
+
+        
+<div class="viewcode-block" id="RandEmpiricalDistribution.calculate_p_values">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.RandEmpiricalDistribution.calculate_p_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_p_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rand_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">adj_rand_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate p-values for given Rand index values.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rand_value : float</span>
+<span class="sd">            Observed Rand index</span>
+<span class="sd">        adj_rand_value : float</span>
+<span class="sd">            Observed adjusted Rand index</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary with p-values: {&#39;rand&#39;: (upper_p, lower_p), &#39;adj_rand&#39;: (upper_p, lower_p)}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Find indices with higher values</span>
+        <span class="n">rand_gr_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rand_dist</span> <span class="o">&gt;</span> <span class="n">rand_value</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">adj_rand_gr_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adj_rand_dist</span> <span class="o">&gt;</span> <span class="n">adj_rand_value</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="c1"># Calculate p-values</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rand_gr_idx</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rand_p</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Better than all values</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">below</span> <span class="o">=</span> <span class="p">(</span><span class="n">rand_gr_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_points</span>
+            <span class="n">rand_p</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">below</span><span class="p">,</span> <span class="n">below</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">adj_rand_gr_idx</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">adj_rand_p</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Better than all values</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">below</span> <span class="o">=</span> <span class="p">(</span><span class="n">adj_rand_gr_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_points</span>
+            <span class="n">adj_rand_p</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">below</span><span class="p">,</span> <span class="n">below</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;rand&#39;</span><span class="p">:</span> <span class="n">rand_p</span><span class="p">,</span>
+            <span class="s1">&#39;adj_rand&#39;</span><span class="p">:</span> <span class="n">adj_rand_p</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RandIndex">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.RandIndex">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RandIndex</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculator for Rand index and adjusted Rand index.</span>
+<span class="sd">    </span>
+<span class="sd">    The Rand index measures the similarity between two clusterings by considering</span>
+<span class="sd">    all pairs of items and checking whether they are grouped consistently.</span>
+<span class="sd">    </span>
+<span class="sd">    The adjusted Rand index corrects for chance agreement and is preferred</span>
+<span class="sd">    for comparing clusterings with different numbers of clusters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="RandIndex.calculate">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.RandIndex.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">clusters1</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">],</span>
+        <span class="n">clusters2</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate Rand index and adjusted Rand index.</span>
+<span class="sd">        </span>
+<span class="sd">        This implements the methodology from RandIndex4.m, computing both</span>
+<span class="sd">        the standard Rand index (Rand, 1971) and the adjusted Rand index</span>
+<span class="sd">        (Hubert and Arabie, 1985).</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        clusters1 : ndarray of shape (n_items,)</span>
+<span class="sd">            First clustering assignment (1-based cluster labels)</span>
+<span class="sd">        clusters2 : ndarray of shape (n_items,)</span>
+<span class="sd">            Second clustering assignment (1-based cluster labels)</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        rand : float</span>
+<span class="sd">            Rand index (0 to 1, where 1 indicates perfect agreement)</span>
+<span class="sd">        adj_rand : float</span>
+<span class="sd">            Adjusted Rand index (can be negative, 1 indicates perfect agreement)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate inputs</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clusters1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">clusters2</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Clusterings must have the same number of items&quot;</span><span class="p">)</span>
+            
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">clusters1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least 2 items required for Rand index&quot;</span><span class="p">)</span>
+            
+        <span class="c1"># Total number of pairs</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+        
+        <span class="c1"># Get maximum cluster label to size contingency table</span>
+        <span class="n">max_label</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">clusters1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">clusters2</span><span class="p">))</span>
+        
+        <span class="c1"># Create indicator matrices (n x max_clusters)</span>
+        <span class="c1"># CA1[i,j] = 1 if item i is in cluster j+1</span>
+        <span class="n">CA1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">max_label</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">CA2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">max_label</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        
+        <span class="c1"># Fill indicator matrices (convert to 0-based indexing)</span>
+        <span class="n">CA1</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">clusters1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">CA2</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">clusters2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        
+        <span class="c1"># Compute contingency table</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">CA1</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">CA2</span>  <span class="c1"># Clusters1 x Clusters2 contingency table</span>
+        
+        <span class="c1"># Row and column sums</span>
+        <span class="n">row_sums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">col_sums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate intermediate values</span>
+        <span class="c1"># P: pairs from same cluster in clustering 1</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">row_sums</span> <span class="o">*</span> <span class="p">(</span><span class="n">row_sums</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># Q: pairs from same cluster in clustering 2  </span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">col_sums</span> <span class="o">*</span> <span class="p">(</span><span class="n">col_sums</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># T: pairs in same cluster in both clusterings</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">match</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">n</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+        
+        <span class="c1"># Rand index: (a + b) / (n choose 2)</span>
+        <span class="c1"># where a = T (agree same), b = N - P - Q + T (agree different)</span>
+        <span class="n">rand</span> <span class="o">=</span> <span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">T</span> <span class="o">-</span> <span class="n">P</span> <span class="o">-</span> <span class="n">Q</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
+        
+        <span class="c1"># Adjusted Rand index</span>
+        <span class="k">if</span> <span class="n">N</span> <span class="o">*</span> <span class="p">(</span><span class="n">P</span> <span class="o">+</span> <span class="n">Q</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Handle edge case where denominator is 0</span>
+            <span class="n">adj_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">adj_rand</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="n">T</span> <span class="o">-</span> <span class="n">P</span> <span class="o">*</span> <span class="n">Q</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="p">(</span><span class="n">P</span> <span class="o">+</span> <span class="n">Q</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P</span> <span class="o">*</span> <span class="n">Q</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="n">rand</span><span class="p">,</span> <span class="n">adj_rand</span></div>
+
+        
+<div class="viewcode-block" id="RandIndex.calculate_detailed">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.RandIndex.calculate_detailed">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_detailed</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">clusters1</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">],</span>
+        <span class="n">clusters2</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RandIndexResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate Rand index with detailed contingency information.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        clusters1 : ndarray of shape (n_items,)</span>
+<span class="sd">            First clustering assignment (1-based cluster labels)</span>
+<span class="sd">        clusters2 : ndarray of shape (n_items,)</span>
+<span class="sd">            Second clustering assignment (1-based cluster labels)</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        result : RandIndexResult</span>
+<span class="sd">            Detailed results including contingency table counts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">clusters1</span><span class="p">)</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+        
+        <span class="c1"># Get basic Rand indices</span>
+        <span class="n">rand</span><span class="p">,</span> <span class="n">adj_rand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span><span class="n">clusters1</span><span class="p">,</span> <span class="n">clusters2</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate detailed contingency counts</span>
+        <span class="c1"># a: pairs in same cluster in both</span>
+        <span class="c1"># b: pairs in different clusters in both</span>
+        <span class="c1"># c: pairs in same cluster in C1, different in C2</span>
+        <span class="c1"># d: pairs in different cluster in C1, same in C2</span>
+        
+        <span class="n">a</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># agree same</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># agree different</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># disagree (C1 same, C2 diff)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># disagree (C1 diff, C2 same)</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+                <span class="n">same_c1</span> <span class="o">=</span> <span class="n">clusters1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">clusters1</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">same_c2</span> <span class="o">=</span> <span class="n">clusters2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">clusters2</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                
+                <span class="k">if</span> <span class="n">same_c1</span> <span class="ow">and</span> <span class="n">same_c2</span><span class="p">:</span>
+                    <span class="n">a</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">same_c1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">same_c2</span><span class="p">:</span>
+                    <span class="n">b</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">same_c1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">same_c2</span><span class="p">:</span>
+                    <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># not same_c1 and same_c2</span>
+                    <span class="n">d</span> <span class="o">+=</span> <span class="mi">1</span>
+                    
+        <span class="k">return</span> <span class="n">RandIndexResult</span><span class="p">(</span>
+            <span class="n">rand</span><span class="o">=</span><span class="n">rand</span><span class="p">,</span>
+            <span class="n">adj_rand</span><span class="o">=</span><span class="n">adj_rand</span><span class="p">,</span>
+            <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span>
+            <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span>
+            <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">n_items</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
+            <span class="n">n_pairs</span><span class="o">=</span><span class="n">N</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="create_rand_empirical_distribution">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.create_rand_empirical_distribution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_rand_empirical_distribution</span><span class="p">(</span>
+    <span class="n">n_items</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">min_items</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RandEmpiricalDistribution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create empirical distribution for Rand index under random clustering.</span>
+<span class="sd">    </span>
+<span class="sd">    This function implements the methodology from RandCreateDist.m, generating</span>
+<span class="sd">    random clustering pairs and computing their Rand indices to build an</span>
+<span class="sd">    empirical null distribution.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_items : int</span>
+<span class="sd">        Number of items to cluster</span>
+<span class="sd">    n_clusters : int</span>
+<span class="sd">        Number of clusters</span>
+<span class="sd">    n_points : int</span>
+<span class="sd">        Number of points in empirical distribution</span>
+<span class="sd">    min_items : int, default=1</span>
+<span class="sd">        Minimum number of items required per cluster</span>
+<span class="sd">    random_state : int, optional</span>
+<span class="sd">        Random seed for reproducibility</span>
+<span class="sd">    n_jobs : int, default=1</span>
+<span class="sd">        Number of parallel jobs. -1 means using all processors.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    distribution : RandEmpiricalDistribution</span>
+<span class="sd">        Empirical distribution of Rand indices</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Initialize arrays</span>
+    <span class="n">rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_points</span><span class="p">)</span>
+    <span class="n">adj_rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_points</span><span class="p">)</span>
+    
+    <span class="c1"># Random number generator</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">MatlabRandom</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+    <span class="n">rand_calc</span> <span class="o">=</span> <span class="n">RandIndex</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="n">n_jobs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Sequential processing</span>
+        <span class="k">for</span> <span class="n">i_point</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_points</span><span class="p">):</span>
+            <span class="c1"># Generate two random clusterings with min_items constraint</span>
+            <span class="n">clusters1</span> <span class="o">=</span> <span class="n">_generate_random_clustering</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_items</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+            <span class="n">clusters2</span> <span class="o">=</span> <span class="n">_generate_random_clustering</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_items</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+            
+            <span class="c1"># Calculate Rand indices</span>
+            <span class="n">rand_dist</span><span class="p">[</span><span class="n">i_point</span><span class="p">],</span> <span class="n">adj_rand_dist</span><span class="p">[</span><span class="n">i_point</span><span class="p">]</span> <span class="o">=</span> <span class="n">rand_calc</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span>
+                <span class="n">clusters1</span><span class="p">,</span> <span class="n">clusters2</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Parallel processing</span>
+        <span class="n">n_workers</span> <span class="o">=</span> <span class="n">n_jobs</span> <span class="k">if</span> <span class="n">n_jobs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">compute_sample</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Compute one sample for the distribution.&quot;&quot;&quot;</span>
+            <span class="n">local_rng</span> <span class="o">=</span> <span class="n">MatlabRandom</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+            <span class="n">clusters1</span> <span class="o">=</span> <span class="n">_generate_random_clustering</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_items</span><span class="p">,</span> <span class="n">local_rng</span><span class="p">)</span>
+            <span class="n">clusters2</span> <span class="o">=</span> <span class="n">_generate_random_clustering</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_items</span><span class="p">,</span> <span class="n">local_rng</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">rand_calc</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span><span class="n">clusters1</span><span class="p">,</span> <span class="n">clusters2</span><span class="p">)</span>
+            
+        <span class="c1"># Generate unique seeds for each worker</span>
+        <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+            <span class="n">seeds</span> <span class="o">=</span> <span class="n">base_rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">**</span><span class="mi">31</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_points</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seeds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">**</span><span class="mi">31</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_points</span><span class="p">)</span>
+            
+        <span class="k">with</span> <span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">n_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">futures</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">compute_sample</span><span class="p">,</span> <span class="n">seeds</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span> <span class="n">i</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_points</span><span class="p">)</span>
+            <span class="p">}</span>
+            
+            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+                <span class="n">rand_dist</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">adj_rand_dist</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                
+    <span class="c1"># Sort distributions</span>
+    <span class="n">rand_dist</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="n">adj_rand_dist</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">RandEmpiricalDistribution</span><span class="p">(</span>
+        <span class="n">rand_dist</span><span class="o">=</span><span class="n">rand_dist</span><span class="p">,</span>
+        <span class="n">adj_rand_dist</span><span class="o">=</span><span class="n">adj_rand_dist</span><span class="p">,</span>
+        <span class="n">n_points</span><span class="o">=</span><span class="n">n_points</span><span class="p">,</span>
+        <span class="n">n_items</span><span class="o">=</span><span class="n">n_items</span><span class="p">,</span>
+        <span class="n">n_clusters</span><span class="o">=</span><span class="n">n_clusters</span><span class="p">,</span>
+        <span class="n">min_items</span><span class="o">=</span><span class="n">min_items</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_generate_random_clustering</span><span class="p">(</span>
+    <span class="n">n_items</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">min_items</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">MatlabRandom</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate random clustering with minimum items constraint.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_items : int</span>
+<span class="sd">        Number of items</span>
+<span class="sd">    n_clusters : int</span>
+<span class="sd">        Number of clusters</span>
+<span class="sd">    min_items : int</span>
+<span class="sd">        Minimum items per cluster</span>
+<span class="sd">    rng : MatlabRandom</span>
+<span class="sd">        Random number generator</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    clusters : ndarray</span>
+<span class="sd">        Random cluster assignments (1-based)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">min_item_count</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">while</span> <span class="n">min_item_count</span> <span class="o">&lt;</span> <span class="n">min_items</span><span class="p">:</span>
+        <span class="c1"># Generate random assignments (1-based)</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randi</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">,</span> <span class="n">n_items</span><span class="p">)</span>
+        
+        <span class="c1"># Check minimum item count</span>
+        <span class="n">min_item_count</span> <span class="o">=</span> <span class="n">n_items</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_clusters</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">clusters</span> <span class="o">==</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">min_item_count</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">min_item_count</span><span class="p">)</span>
+            
+    <span class="k">return</span> <span class="n">clusters</span>
+
+
+<div class="viewcode-block" id="rand_empirical_p">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.rand_index.rand_empirical_p">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rand_empirical_p</span><span class="p">(</span>
+    <span class="n">rand_dist</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">adj_rand_dist</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">rand</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">adj_rand</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">create_confidence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate p-values from empirical distribution.</span>
+<span class="sd">    </span>
+<span class="sd">    This implements the functionality from RandEmpiricalP.m, computing</span>
+<span class="sd">    p-values and confidence intervals from empirical distributions.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    rand_dist : ndarray</span>
+<span class="sd">        Sorted empirical distribution of Rand indices</span>
+<span class="sd">    adj_rand_dist : ndarray</span>
+<span class="sd">        Sorted empirical distribution of adjusted Rand indices</span>
+<span class="sd">    rand : float</span>
+<span class="sd">        Observed Rand index</span>
+<span class="sd">    adj_rand : float</span>
+<span class="sd">        Observed adjusted Rand index</span>
+<span class="sd">    create_confidence : bool, default=True</span>
+<span class="sd">        Whether to compute confidence interval values</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result : dict</span>
+<span class="sd">        Dictionary containing:</span>
+<span class="sd">        - &#39;rand&#39;: Observed Rand index</span>
+<span class="sd">        - &#39;adj_rand&#39;: Observed adjusted Rand index  </span>
+<span class="sd">        - &#39;rand_p&#39;: (upper_p, lower_p) tuple for Rand index</span>
+<span class="sd">        - &#39;adj_rand_p&#39;: (upper_p, lower_p) tuple for adjusted Rand</span>
+<span class="sd">        - &#39;rand_conf&#39;: Confidence interval values (if requested)</span>
+<span class="sd">        - &#39;adj_rand_conf&#39;: Adjusted Rand CI values (if requested)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_points</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rand_dist</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;rand&#39;</span><span class="p">:</span> <span class="n">rand</span><span class="p">,</span>
+        <span class="s1">&#39;adj_rand&#39;</span><span class="p">:</span> <span class="n">adj_rand</span>
+    <span class="p">}</span>
+    
+    <span class="c1"># Calculate p-values for Rand index</span>
+    <span class="n">gr_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">rand_dist</span> <span class="o">&gt;</span> <span class="n">rand</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gr_indexes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;rand_p&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Better than all values</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">below</span> <span class="o">=</span> <span class="p">(</span><span class="n">gr_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_points</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;rand_p&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">below</span><span class="p">,</span> <span class="n">below</span><span class="p">)</span>
+        
+    <span class="c1"># Calculate p-values for adjusted Rand index  </span>
+    <span class="n">gr_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">adj_rand_dist</span> <span class="o">&gt;</span> <span class="n">adj_rand</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gr_indexes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;adj_rand_p&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Better than all values</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">below</span> <span class="o">=</span> <span class="p">(</span><span class="n">gr_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_points</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;adj_rand_p&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">below</span><span class="p">,</span> <span class="n">below</span><span class="p">)</span>
+        
+    <span class="c1"># Create confidence interval values if requested</span>
+    <span class="k">if</span> <span class="n">create_confidence</span><span class="p">:</span>
+        <span class="c1"># Standard confidence levels</span>
+        <span class="n">conf_levels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.005</span><span class="p">,</span> <span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">,</span> <span class="mf">0.995</span><span class="p">])</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">conf_levels</span> <span class="o">*</span> <span class="n">n_points</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n_points</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;rand_conf&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rand_dist</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;adj_rand_conf&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">adj_rand_dist</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;conf_levels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf_levels</span>
+        
+    <span class="k">return</span> <span class="n">result</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, SUBMARIT Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

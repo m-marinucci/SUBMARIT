@@ -1,0 +1,569 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>submarit.validation.topk_analysis &mdash; SUBMARIT 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SUBMARIT
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../algorithms.html">Algorithm Theory and Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance.html">Performance Tuning Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../migration_guide.html">MATLAB to Python Migration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">Frequently Asked Questions (FAQ)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SUBMARIT</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">submarit.validation.topk_analysis</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for submarit.validation.topk_analysis</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Top-k clustering solution analysis.</span>
+
+<span class="sd">This module implements functionality from RunClustersTopk.m and RunClustersTopk2.m</span>
+<span class="sd">for analyzing agreement among top-k clustering solutions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">as_completed</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.algorithms.local_search</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSearchResult</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.validation.multiple_runs</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_clusters</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.validation.rand_index</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandIndex</span><span class="p">,</span> <span class="n">create_rand_empirical_distribution</span><span class="p">,</span> <span class="n">rand_empirical_p</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">submarit.utils.matlab_compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatlabRandom</span>
+
+
+<div class="viewcode-block" id="TopKResult">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.topk_analysis.TopKResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TopKResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for top-k clustering analysis results.</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        best_solutions: List of top-k best clustering solutions</span>
+<span class="sd">        avg_rand: Average Rand index among top-k solutions</span>
+<span class="sd">        avg_adj_rand: Average adjusted Rand index among top-k solutions</span>
+<span class="sd">        rand_p: P-value for Rand index</span>
+<span class="sd">        adj_rand_p: P-value for adjusted Rand index</span>
+<span class="sd">        rand_conf: Confidence interval values for Rand index</span>
+<span class="sd">        adj_rand_conf: Confidence interval values for adjusted Rand</span>
+<span class="sd">        pairwise_rand: Matrix of pairwise Rand indices</span>
+<span class="sd">        pairwise_adj_rand: Matrix of pairwise adjusted Rand indices</span>
+<span class="sd">        empirical_dist: Empirical distribution used for p-values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">best_solutions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">LocalSearchResult</span><span class="p">]</span>
+    <span class="n">avg_rand</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">avg_adj_rand</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">rand_p</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">adj_rand_p</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">rand_conf</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">adj_rand_conf</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pairwise_rand</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pairwise_adj_rand</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">empirical_dist</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    
+<div class="viewcode-block" id="TopKResult.summary">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.topk_analysis.TopKResult.summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate summary of top-k analysis results.&quot;&quot;&quot;</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">best_solutions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Top-</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> Clustering Analysis</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;===========================</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Average Rand index: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">avg_rand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Average adjusted Rand index: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">avg_adj_rand</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Rand p-value: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rand_p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Adjusted Rand p-value: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adj_rand_p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Best solution statistics:</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Log-likelihood: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_solutions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">LogLH</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Diff value: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_solutions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Diff</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Z-value: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_solutions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ZValue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="run_clusters_topk">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.topk_analysis.run_clusters_topk">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_clusters_topk</span><span class="p">(</span>
+    <span class="n">swm</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">min_items</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_runs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_random</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+    <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;v1&#39;</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TopKResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run multiple clusterings and analyze agreement among top-k solutions.</span>
+<span class="sd">    </span>
+<span class="sd">    This function implements the functionality of RunClustersTopk.m and</span>
+<span class="sd">    RunClustersTopk2.m, finding the top-k best clustering solutions and</span>
+<span class="sd">    analyzing their agreement using Rand indices.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    swm : ndarray of shape (n_items, n_items)</span>
+<span class="sd">        Product x product switching matrix</span>
+<span class="sd">    n_clusters : int</span>
+<span class="sd">        Number of clusters</span>
+<span class="sd">    min_items : int</span>
+<span class="sd">        Minimum number of items per cluster</span>
+<span class="sd">    n_runs : int</span>
+<span class="sd">        Number of experimental runs</span>
+<span class="sd">    top_k : int</span>
+<span class="sd">        Number of top solutions to return</span>
+<span class="sd">    n_random : int, default=10000</span>
+<span class="sd">        Number of random values for empirical distributions</span>
+<span class="sd">    algorithm : {&#39;v1&#39;, &#39;v2&#39;}, default=&#39;v1&#39;</span>
+<span class="sd">        Which algorithm version to use:</span>
+<span class="sd">        - &#39;v1&#39;: KSMLocalSearch (PHat-P optimization)</span>
+<span class="sd">        - &#39;v2&#39;: KSMLocalSearch2 (log-likelihood optimization)</span>
+<span class="sd">    random_state : int, optional</span>
+<span class="sd">        Random seed for reproducibility</span>
+<span class="sd">    n_jobs : int, default=1</span>
+<span class="sd">        Number of parallel jobs (-1 for all processors)</span>
+<span class="sd">    verbose : bool, default=False</span>
+<span class="sd">        Whether to print progress messages</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result : TopKResult</span>
+<span class="sd">        Analysis results including p-values and confidence intervals</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_items</span> <span class="o">=</span> <span class="n">swm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running </span><span class="si">{</span><span class="n">n_runs</span><span class="si">}</span><span class="s2"> clustering attempts to find top-</span><span class="si">{</span><span class="n">top_k</span><span class="si">}</span><span class="s2"> solutions...&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Initialize storage for best solutions</span>
+    <span class="n">best_ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">top_k</span><span class="p">,</span> <span class="mf">1e7</span> <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;v2&#39;</span> <span class="k">else</span> <span class="o">-</span><span class="mf">1e7</span><span class="p">)</span>
+    <span class="n">best_solutions</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">top_k</span>
+    
+    <span class="c1"># Run clustering multiple times</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_runs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_runs</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Progress: </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_runs</span><span class="si">}</span><span class="s2"> runs completed&quot;</span><span class="p">)</span>
+            
+        <span class="c1"># Set random seed for this run</span>
+        <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">run_seed</span> <span class="o">=</span> <span class="n">random_state</span> <span class="o">+</span> <span class="n">i</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">run_seed</span> <span class="o">=</span> <span class="kc">None</span>
+            
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Run clustering</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">run_clusters</span><span class="p">(</span>
+                <span class="n">swm</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_items</span><span class="p">,</span> 
+                <span class="n">n_runs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># Single run</span>
+                <span class="n">random_state</span><span class="o">=</span><span class="n">run_seed</span><span class="p">,</span>
+                <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Get objective value</span>
+            <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;v1&#39;</span><span class="p">:</span>
+                <span class="n">obj_value</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">Diff</span>  <span class="c1"># Maximize</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">obj_value</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">LogLH</span>  <span class="c1"># Maximize (note: stored as positive)</span>
+                
+            <span class="c1"># Check if this belongs in top-k</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">top_k</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;v1&#39;</span><span class="p">:</span>
+                    <span class="c1"># For v1, we maximize Diff</span>
+                    <span class="k">if</span> <span class="n">obj_value</span> <span class="o">&gt;</span> <span class="n">best_ll</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                        <span class="c1"># Shift worse solutions down</span>
+                        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">top_k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                            <span class="n">best_ll</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">best_ll</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                            <span class="n">best_solutions</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">best_solutions</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                        <span class="c1"># Insert new solution</span>
+                        <span class="n">best_ll</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj_value</span>
+                        <span class="n">best_solutions</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+                        <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># For v2, we maximize LogLH (less negative is better)</span>
+                    <span class="k">if</span> <span class="n">obj_value</span> <span class="o">&gt;</span> <span class="n">best_ll</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                        <span class="c1"># Shift worse solutions down</span>
+                        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">top_k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                            <span class="n">best_ll</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">best_ll</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                            <span class="n">best_solutions</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">best_solutions</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                        <span class="c1"># Insert new solution</span>
+                        <span class="n">best_ll</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj_value</span>
+                        <span class="n">best_solutions</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+                        <span class="k">break</span>
+                        
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+    
+    <span class="c1"># Filter out None values (in case we didn&#39;t find enough solutions)</span>
+    <span class="n">best_solutions</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">best_solutions</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">best_solutions</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">top_k</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">best_solutions</span><span class="p">)</span><span class="si">}</span><span class="s2"> valid solutions out of </span><span class="si">{</span><span class="n">top_k</span><span class="si">}</span><span class="s2"> requested&quot;</span><span class="p">)</span>
+        <span class="n">top_k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">best_solutions</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Computing pairwise Rand indices for top-</span><span class="si">{</span><span class="n">top_k</span><span class="si">}</span><span class="s2"> solutions...&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Calculate pairwise Rand indices</span>
+    <span class="n">rand_calc</span> <span class="o">=</span> <span class="n">RandIndex</span><span class="p">()</span>
+    <span class="n">pairwise_rand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">top_k</span><span class="p">,</span> <span class="n">top_k</span><span class="p">))</span>
+    <span class="n">pairwise_adj_rand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">top_k</span><span class="p">,</span> <span class="n">top_k</span><span class="p">))</span>
+    
+    <span class="n">sum_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">sum_adj_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">n_pairs</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">top_k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">top_k</span><span class="p">):</span>
+            <span class="n">rand_idx</span><span class="p">,</span> <span class="n">adj_rand_idx</span> <span class="o">=</span> <span class="n">rand_calc</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span>
+                <span class="n">best_solutions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">Assign</span><span class="p">,</span>
+                <span class="n">best_solutions</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">Assign</span>
+            <span class="p">)</span>
+            <span class="n">pairwise_rand</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">rand_idx</span>
+            <span class="n">pairwise_rand</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rand_idx</span>
+            <span class="n">pairwise_adj_rand</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">adj_rand_idx</span>
+            <span class="n">pairwise_adj_rand</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">adj_rand_idx</span>
+            
+            <span class="n">sum_rand</span> <span class="o">+=</span> <span class="n">rand_idx</span>
+            <span class="n">sum_adj_rand</span> <span class="o">+=</span> <span class="n">adj_rand_idx</span>
+            <span class="n">n_pairs</span> <span class="o">+=</span> <span class="mi">1</span>
+    
+    <span class="c1"># Fill diagonal</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">pairwise_rand</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">pairwise_adj_rand</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    
+    <span class="c1"># Calculate average Rand indices</span>
+    <span class="n">avg_rand</span> <span class="o">=</span> <span class="n">sum_rand</span> <span class="o">/</span> <span class="n">n_pairs</span> <span class="k">if</span> <span class="n">n_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="n">avg_adj_rand</span> <span class="o">=</span> <span class="n">sum_adj_rand</span> <span class="o">/</span> <span class="n">n_pairs</span> <span class="k">if</span> <span class="n">n_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+    
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating empirical distribution with </span><span class="si">{</span><span class="n">n_random</span><span class="si">}</span><span class="s2"> random samples...&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Create empirical distribution for p-values</span>
+    <span class="k">if</span> <span class="n">n_jobs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Sequential version</span>
+        <span class="n">avg_rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+        <span class="n">avg_adj_rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+        
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">MatlabRandom</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_random</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_random</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Progress: </span><span class="si">{</span><span class="n">k</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_random</span><span class="si">}</span><span class="s2"> samples generated&quot;</span><span class="p">)</span>
+                
+            <span class="c1"># Generate top_k random assignments</span>
+            <span class="n">rand_assign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_items</span><span class="p">,</span> <span class="n">top_k</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">top_k</span><span class="p">):</span>
+                <span class="n">rand_assign</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randi</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">,</span> <span class="n">n_items</span><span class="p">)</span>
+            
+            <span class="c1"># Calculate pairwise Rand indices</span>
+            <span class="n">k_sum_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">k_sum_adj_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">top_k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">top_k</span><span class="p">):</span>
+                    <span class="n">rand_idx</span><span class="p">,</span> <span class="n">adj_rand_idx</span> <span class="o">=</span> <span class="n">rand_calc</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span>
+                        <span class="n">rand_assign</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
+                        <span class="n">rand_assign</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">k_sum_rand</span> <span class="o">+=</span> <span class="n">rand_idx</span>
+                    <span class="n">k_sum_adj_rand</span> <span class="o">+=</span> <span class="n">adj_rand_idx</span>
+            
+            <span class="n">avg_rand_dist</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">k_sum_rand</span> <span class="o">/</span> <span class="n">n_pairs</span> <span class="k">if</span> <span class="n">n_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="n">avg_adj_rand_dist</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">k_sum_adj_rand</span> <span class="o">/</span> <span class="n">n_pairs</span> <span class="k">if</span> <span class="n">n_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Parallel version</span>
+        <span class="n">avg_rand_dist</span><span class="p">,</span> <span class="n">avg_adj_rand_dist</span> <span class="o">=</span> <span class="n">_parallel_empirical_distribution</span><span class="p">(</span>
+            <span class="n">n_items</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">top_k</span><span class="p">,</span> <span class="n">n_random</span><span class="p">,</span> <span class="n">random_state</span><span class="p">,</span> <span class="n">n_jobs</span><span class="p">,</span> <span class="n">verbose</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># Sort distributions</span>
+    <span class="n">avg_rand_dist</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="n">avg_adj_rand_dist</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Computing p-values and confidence intervals...&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Calculate p-values using empirical distribution</span>
+    <span class="n">p_struct</span> <span class="o">=</span> <span class="n">rand_empirical_p</span><span class="p">(</span>
+        <span class="n">avg_rand_dist</span><span class="p">,</span>
+        <span class="n">avg_adj_rand_dist</span><span class="p">,</span>
+        <span class="n">avg_rand</span><span class="p">,</span>
+        <span class="n">avg_adj_rand</span><span class="p">,</span>
+        <span class="n">create_confidence</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">TopKResult</span><span class="p">(</span>
+        <span class="n">best_solutions</span><span class="o">=</span><span class="n">best_solutions</span><span class="p">,</span>
+        <span class="n">avg_rand</span><span class="o">=</span><span class="n">avg_rand</span><span class="p">,</span>
+        <span class="n">avg_adj_rand</span><span class="o">=</span><span class="n">avg_adj_rand</span><span class="p">,</span>
+        <span class="n">rand_p</span><span class="o">=</span><span class="n">p_struct</span><span class="p">[</span><span class="s1">&#39;rand_p&#39;</span><span class="p">],</span>
+        <span class="n">adj_rand_p</span><span class="o">=</span><span class="n">p_struct</span><span class="p">[</span><span class="s1">&#39;adj_rand_p&#39;</span><span class="p">],</span>
+        <span class="n">rand_conf</span><span class="o">=</span><span class="n">p_struct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;rand_conf&#39;</span><span class="p">),</span>
+        <span class="n">adj_rand_conf</span><span class="o">=</span><span class="n">p_struct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;adj_rand_conf&#39;</span><span class="p">),</span>
+        <span class="n">pairwise_rand</span><span class="o">=</span><span class="n">pairwise_rand</span><span class="p">,</span>
+        <span class="n">pairwise_adj_rand</span><span class="o">=</span><span class="n">pairwise_adj_rand</span><span class="p">,</span>
+        <span class="n">empirical_dist</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;avg_rand_dist&#39;</span><span class="p">:</span> <span class="n">avg_rand_dist</span><span class="p">,</span>
+            <span class="s1">&#39;avg_adj_rand_dist&#39;</span><span class="p">:</span> <span class="n">avg_adj_rand_dist</span><span class="p">,</span>
+            <span class="s1">&#39;n_random&#39;</span><span class="p">:</span> <span class="n">n_random</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parallel_empirical_distribution</span><span class="p">(</span>
+    <span class="n">n_items</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_random</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate empirical distribution in parallel.&quot;&quot;&quot;</span>
+    <span class="n">n_workers</span> <span class="o">=</span> <span class="n">n_jobs</span> <span class="k">if</span> <span class="n">n_jobs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_sample</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute one sample for the distribution.&quot;&quot;&quot;</span>
+        <span class="n">local_rng</span> <span class="o">=</span> <span class="n">MatlabRandom</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">rand_calc</span> <span class="o">=</span> <span class="n">RandIndex</span><span class="p">()</span>
+        
+        <span class="c1"># Generate top_k random assignments</span>
+        <span class="n">rand_assign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_items</span><span class="p">,</span> <span class="n">top_k</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">top_k</span><span class="p">):</span>
+            <span class="n">rand_assign</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">local_rng</span><span class="o">.</span><span class="n">randi</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">,</span> <span class="n">n_items</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate pairwise Rand indices</span>
+        <span class="n">sum_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">sum_adj_rand</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">n_pairs</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">top_k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">top_k</span><span class="p">):</span>
+                <span class="n">rand_idx</span><span class="p">,</span> <span class="n">adj_rand_idx</span> <span class="o">=</span> <span class="n">rand_calc</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span>
+                    <span class="n">rand_assign</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
+                    <span class="n">rand_assign</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">sum_rand</span> <span class="o">+=</span> <span class="n">rand_idx</span>
+                <span class="n">sum_adj_rand</span> <span class="o">+=</span> <span class="n">adj_rand_idx</span>
+                <span class="n">n_pairs</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="n">avg_rand</span> <span class="o">=</span> <span class="n">sum_rand</span> <span class="o">/</span> <span class="n">n_pairs</span> <span class="k">if</span> <span class="n">n_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">avg_adj_rand</span> <span class="o">=</span> <span class="n">sum_adj_rand</span> <span class="o">/</span> <span class="n">n_pairs</span> <span class="k">if</span> <span class="n">n_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+        
+        <span class="k">return</span> <span class="n">avg_rand</span><span class="p">,</span> <span class="n">avg_adj_rand</span>
+    
+    <span class="c1"># Generate unique seeds</span>
+    <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">base_rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="n">seeds</span> <span class="o">=</span> <span class="n">base_rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">**</span><span class="mi">31</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_random</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">seeds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">**</span><span class="mi">31</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_random</span><span class="p">)</span>
+    
+    <span class="c1"># Initialize arrays</span>
+    <span class="n">avg_rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+    <span class="n">avg_adj_rand_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+    
+    <span class="k">with</span> <span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">n_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">compute_sample</span><span class="p">,</span> <span class="n">seeds</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span> <span class="n">i</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_random</span><span class="p">)</span>
+        <span class="p">}</span>
+        
+        <span class="n">completed</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+            <span class="n">avg_rand_dist</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">avg_adj_rand_dist</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+            
+            <span class="n">completed</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="n">completed</span> <span class="o">%</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_random</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Progress: </span><span class="si">{</span><span class="n">completed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_random</span><span class="si">}</span><span class="s2"> samples generated&quot;</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">avg_rand_dist</span><span class="p">,</span> <span class="n">avg_adj_rand_dist</span>
+
+
+<div class="viewcode-block" id="analyze_solution_stability">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.topk_analysis.analyze_solution_stability">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">analyze_solution_stability</span><span class="p">(</span>
+    <span class="n">solutions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">LocalSearchResult</span><span class="p">],</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze stability across multiple clustering solutions.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    solutions : list of LocalSearchResult</span>
+<span class="sd">        Clustering solutions to analyze</span>
+<span class="sd">    verbose : bool, default=False</span>
+<span class="sd">        Whether to print analysis details</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    analysis : dict</span>
+<span class="sd">        Dictionary containing:</span>
+<span class="sd">        - &#39;consensus_matrix&#39;: Item x item co-clustering frequency</span>
+<span class="sd">        - &#39;item_stability&#39;: Stability score for each item</span>
+<span class="sd">        - &#39;cluster_stability&#39;: Stability of each cluster</span>
+<span class="sd">        - &#39;overall_stability&#39;: Overall stability score</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">solutions</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No solutions to analyze&quot;</span><span class="p">)</span>
+    
+    <span class="n">n_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solutions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Assign</span><span class="p">)</span>
+    <span class="n">n_solutions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solutions</span><span class="p">)</span>
+    
+    <span class="c1"># Build consensus matrix</span>
+    <span class="n">consensus_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_items</span><span class="p">,</span> <span class="n">n_items</span><span class="p">))</span>
+    
+    <span class="k">for</span> <span class="n">solution</span> <span class="ow">in</span> <span class="n">solutions</span><span class="p">:</span>
+        <span class="n">assignments</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">Assign</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_items</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_items</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">assignments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">assignments</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                    <span class="n">consensus_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">consensus_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    
+    <span class="c1"># Normalize by number of solutions</span>
+    <span class="n">consensus_matrix</span> <span class="o">/=</span> <span class="n">n_solutions</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">consensus_matrix</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    
+    <span class="c1"># Calculate item stability</span>
+    <span class="n">item_stability</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_items</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_items</span><span class="p">):</span>
+        <span class="c1"># Stability is high if co-clustering frequencies are close to 0 or 1</span>
+        <span class="n">co_cluster_freq</span> <span class="o">=</span> <span class="n">consensus_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">item_stability</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">co_cluster_freq</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">co_cluster_freq</span><span class="p">))</span> <span class="o">*</span> <span class="mi">2</span>
+    
+    <span class="c1"># Overall stability</span>
+    <span class="n">overall_stability</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">item_stability</span><span class="p">)</span>
+    
+    <span class="c1"># Analyze cluster-level stability</span>
+    <span class="c1"># Find most common cluster configuration</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+    <span class="n">config_counts</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+    
+    <span class="k">for</span> <span class="n">solution</span> <span class="ow">in</span> <span class="n">solutions</span><span class="p">:</span>
+        <span class="c1"># Create canonical representation of clustering</span>
+        <span class="c1"># (to handle label permutations)</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">Counter</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">Assign</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="n">config_counts</span><span class="p">[</span><span class="n">config</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    
+    <span class="n">most_common_config</span> <span class="o">=</span> <span class="n">config_counts</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">config_stability</span> <span class="o">=</span> <span class="n">most_common_config</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">n_solutions</span>
+    
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Overall stability: </span><span class="si">{</span><span class="n">overall_stability</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Most common configuration appears in </span><span class="si">{</span><span class="n">config_stability</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2"> of solutions&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Configuration: </span><span class="si">{</span><span class="n">most_common_config</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;consensus_matrix&#39;</span><span class="p">:</span> <span class="n">consensus_matrix</span><span class="p">,</span>
+        <span class="s1">&#39;item_stability&#39;</span><span class="p">:</span> <span class="n">item_stability</span><span class="p">,</span>
+        <span class="s1">&#39;overall_stability&#39;</span><span class="p">:</span> <span class="n">overall_stability</span><span class="p">,</span>
+        <span class="s1">&#39;config_stability&#39;</span><span class="p">:</span> <span class="n">config_stability</span><span class="p">,</span>
+        <span class="s1">&#39;most_common_config&#39;</span><span class="p">:</span> <span class="n">most_common_config</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">}</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, SUBMARIT Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

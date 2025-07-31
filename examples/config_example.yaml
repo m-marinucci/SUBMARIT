@@ -1,0 +1,70 @@
+# Example SUBMARIT configuration file
+# This demonstrates various experiment types that can be run in batch
+
+input_file: ../data/example_switching_matrix.npz
+
+experiments:
+  # Basic clustering experiments
+  - name: baseline_k2_v1
+    n_clusters: 2
+    method: v1
+    n_runs: 50
+    min_items: 1
+    max_iter: 100
+    seed: 42
+    
+  - name: baseline_k3_v1
+    n_clusters: 3
+    method: v1
+    n_runs: 50
+    min_items: 1
+    max_iter: 100
+    seed: 42
+    
+  - name: baseline_k4_v1
+    n_clusters: 4
+    method: v1
+    n_runs: 50
+    min_items: 1
+    max_iter: 100
+    seed: 42
+    
+  # Log-likelihood optimization versions
+  - name: baseline_k3_v2
+    n_clusters: 3
+    method: v2
+    n_runs: 50
+    min_items: 1
+    max_iter: 100
+    seed: 42
+    
+  # Top-k stability analysis
+  - name: topk_stability_k3
+    n_clusters: 3
+    method: v1
+    n_runs: 200
+    min_items: 1
+    top_k: 10
+    n_random: 10000
+    n_jobs: 4
+    seed: 42
+    
+  # High-precision run with more iterations
+  - name: high_precision_k3
+    n_clusters: 3
+    method: v1
+    n_runs: 500
+    min_items: 2
+    max_iter: 200
+    seed: 42
+    
+  # Parallel top-k analysis
+  - name: parallel_topk_k4
+    n_clusters: 4
+    method: v2
+    n_runs: 300
+    min_items: 1
+    top_k: 20
+    n_random: 5000
+    n_jobs: -1  # Use all available cores
+    seed: 42

@@ -1,0 +1,587 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>submarit.validation.p_values &mdash; SUBMARIT 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SUBMARIT
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../algorithms.html">Algorithm Theory and Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance.html">Performance Tuning Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../migration_guide.html">MATLAB to Python Migration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">Frequently Asked Questions (FAQ)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SUBMARIT</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">submarit.validation.p_values</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for submarit.validation.p_values</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;P-value calculation utilities for SUBMARIT validation.</span>
+
+<span class="sd">This module provides utilities for calculating p-values from empirical</span>
+<span class="sd">distributions, supporting both one-tailed and two-tailed tests, as well</span>
+<span class="sd">as multiple testing corrections.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+
+
+<div class="viewcode-block" id="PValueResult">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.p_values.PValueResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PValueResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for p-value calculation results.</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        observed: Observed test statistic value</span>
+<span class="sd">        p_value: Raw p-value</span>
+<span class="sd">        p_value_corrected: Corrected p-value (if correction applied)</span>
+<span class="sd">        percentile: Percentile of observed value in distribution</span>
+<span class="sd">        ci_lower: Lower confidence interval bound</span>
+<span class="sd">        ci_upper: Upper confidence interval bound</span>
+<span class="sd">        direction: Test direction (&#39;greater&#39;, &#39;less&#39;, or &#39;two-sided&#39;)</span>
+<span class="sd">        n_simulations: Number of simulations in empirical distribution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">observed</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">p_value</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">p_value_corrected</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">percentile</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ci_lower</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ci_upper</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;greater&#39;</span>
+    <span class="n">n_simulations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    
+<div class="viewcode-block" id="PValueResult.is_significant">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.p_values.PValueResult.is_significant">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_significant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if result is statistically significant.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        alpha : float, default=0.05</span>
+<span class="sd">            Significance level</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if p-value &lt; alpha</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value_corrected</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value_corrected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value</span>
+        <span class="k">return</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="n">alpha</span></div>
+
+        
+<div class="viewcode-block" id="PValueResult.summary">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.p_values.PValueResult.summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate summary of p-value results.&quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;P-value Analysis Results&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;=======================&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Observed value: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;P-value (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">p_value</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value_corrected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Corrected p-value: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">p_value_corrected</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">percentile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Percentile: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">percentile</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ci_lower</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ci_upper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;95% CI: [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ci_lower</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ci_upper</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_simulations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Based on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_simulations</span><span class="si">}</span><span class="s2"> simulations&quot;</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="calculate_empirical_p_value">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.p_values.calculate_empirical_p_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_empirical_p_value</span><span class="p">(</span>
+    <span class="n">observed</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">null_distribution</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;greater&#39;</span><span class="p">,</span>
+    <span class="n">return_percentile</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PValueResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate p-value from empirical distribution.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    observed : float</span>
+<span class="sd">        Observed test statistic</span>
+<span class="sd">    null_distribution : ndarray</span>
+<span class="sd">        Null distribution values (should be sorted)</span>
+<span class="sd">    direction : {&#39;greater&#39;, &#39;less&#39;, &#39;two-sided&#39;}, default=&#39;greater&#39;</span>
+<span class="sd">        Direction of the test:</span>
+<span class="sd">        - &#39;greater&#39;: P(X &gt;= observed)</span>
+<span class="sd">        - &#39;less&#39;: P(X &lt;= observed)</span>
+<span class="sd">        - &#39;two-sided&#39;: 2 * min(P(X &gt;= observed), P(X &lt;= observed))</span>
+<span class="sd">    return_percentile : bool, default=True</span>
+<span class="sd">        Whether to calculate percentile of observed value</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result : PValueResult</span>
+<span class="sd">        P-value calculation results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">null_distribution</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Null distribution is empty&quot;</span><span class="p">)</span>
+        
+    <span class="c1"># Ensure distribution is sorted</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">null_distribution</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">null_distribution</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="n">null_distribution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">null_distribution</span><span class="p">)</span>
+        
+    <span class="c1"># Calculate p-value based on direction</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;greater&#39;</span><span class="p">:</span>
+        <span class="c1"># P(X &gt;= observed)</span>
+        <span class="n">n_greater_equal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">null_distribution</span> <span class="o">&gt;=</span> <span class="n">observed</span><span class="p">)</span>
+        <span class="n">p_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_greater_equal</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Add 1 for continuity correction</span>
+        
+    <span class="k">elif</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;less&#39;</span><span class="p">:</span>
+        <span class="c1"># P(X &lt;= observed)</span>
+        <span class="n">n_less_equal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">null_distribution</span> <span class="o">&lt;=</span> <span class="n">observed</span><span class="p">)</span>
+        <span class="n">p_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_less_equal</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;two-sided&#39;</span><span class="p">:</span>
+        <span class="c1"># Two-sided test</span>
+        <span class="n">n_greater_equal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">null_distribution</span> <span class="o">&gt;=</span> <span class="n">observed</span><span class="p">)</span>
+        <span class="n">n_less_equal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">null_distribution</span> <span class="o">&lt;=</span> <span class="n">observed</span><span class="p">)</span>
+        <span class="n">p_greater</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_greater_equal</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">p_less</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_less_equal</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">p_value</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">min</span><span class="p">(</span><span class="n">p_greater</span><span class="p">,</span> <span class="n">p_less</span><span class="p">)</span>
+        <span class="n">p_value</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">p_value</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Ensure p &lt;= 1</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid direction: </span><span class="si">{</span><span class="n">direction</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+    <span class="c1"># Calculate percentile if requested</span>
+    <span class="n">percentile</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">return_percentile</span><span class="p">:</span>
+        <span class="n">n_below</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">null_distribution</span> <span class="o">&lt;</span> <span class="n">observed</span><span class="p">)</span>
+        <span class="n">percentile</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">n_below</span> <span class="o">/</span> <span class="n">n</span>
+        
+    <span class="c1"># Calculate confidence interval (2.5% and 97.5% percentiles)</span>
+    <span class="n">ci_lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">null_distribution</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)</span>
+    <span class="n">ci_upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">null_distribution</span><span class="p">,</span> <span class="mf">97.5</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">PValueResult</span><span class="p">(</span>
+        <span class="n">observed</span><span class="o">=</span><span class="n">observed</span><span class="p">,</span>
+        <span class="n">p_value</span><span class="o">=</span><span class="n">p_value</span><span class="p">,</span>
+        <span class="n">percentile</span><span class="o">=</span><span class="n">percentile</span><span class="p">,</span>
+        <span class="n">ci_lower</span><span class="o">=</span><span class="n">ci_lower</span><span class="p">,</span>
+        <span class="n">ci_upper</span><span class="o">=</span><span class="n">ci_upper</span><span class="p">,</span>
+        <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">,</span>
+        <span class="n">n_simulations</span><span class="o">=</span><span class="n">n</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_p_value_range">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.p_values.calculate_p_value_range">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_p_value_range</span><span class="p">(</span>
+    <span class="n">observed</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">null_distribution</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate upper and lower p-value bounds.</span>
+<span class="sd">    </span>
+<span class="sd">    This implements the methodology from MATLAB code where both</span>
+<span class="sd">    upper and lower p-values are returned as a tuple.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    observed : float</span>
+<span class="sd">        Observed test statistic</span>
+<span class="sd">    null_distribution : ndarray</span>
+<span class="sd">        Sorted null distribution values</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    p_range : tuple</span>
+<span class="sd">        (upper_p, lower_p) where:</span>
+<span class="sd">        - upper_p: Probability of values &gt;= observed</span>
+<span class="sd">        - lower_p: Probability of values &lt;= observed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">null_distribution</span><span class="p">)</span>
+    
+    <span class="c1"># Find indices with values greater than observed</span>
+    <span class="n">gr_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">null_distribution</span> <span class="o">&gt;</span> <span class="n">observed</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gr_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Observed is better than all values</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Calculate proportion below observed</span>
+        <span class="n">below</span> <span class="o">=</span> <span class="p">(</span><span class="n">gr_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">below</span><span class="p">,</span> <span class="n">below</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="multiple_testing_correction">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.p_values.multiple_testing_correction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">multiple_testing_correction</span><span class="p">(</span>
+    <span class="n">p_values</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]],</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;bonferroni&#39;</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply multiple testing correction to p-values.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    p_values : array-like</span>
+<span class="sd">        Raw p-values to correct</span>
+<span class="sd">    method : {&#39;bonferroni&#39;, &#39;holm&#39;, &#39;fdr_bh&#39;, &#39;fdr_by&#39;}, default=&#39;bonferroni&#39;</span>
+<span class="sd">        Correction method:</span>
+<span class="sd">        - &#39;bonferroni&#39;: Bonferroni correction</span>
+<span class="sd">        - &#39;holm&#39;: Holm-Bonferroni method</span>
+<span class="sd">        - &#39;fdr_bh&#39;: Benjamini-Hochberg FDR</span>
+<span class="sd">        - &#39;fdr_by&#39;: Benjamini-Yekutieli FDR</span>
+<span class="sd">    alpha : float, default=0.05</span>
+<span class="sd">        Family-wise error rate or false discovery rate</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    results : dict</span>
+<span class="sd">        Dictionary containing:</span>
+<span class="sd">        - &#39;corrected&#39;: Corrected p-values</span>
+<span class="sd">        - &#39;rejected&#39;: Boolean array of rejected hypotheses</span>
+<span class="sd">        - &#39;threshold&#39;: Adjusted significance threshold</span>
+<span class="sd">        - &#39;method&#39;: Correction method used</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+    <span class="n">n_tests</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">n_tests</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No p-values provided&quot;</span><span class="p">)</span>
+        
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;bonferroni&#39;</span><span class="p">:</span>
+        <span class="c1"># Bonferroni correction</span>
+        <span class="n">corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">p_values</span> <span class="o">*</span> <span class="n">n_tests</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">n_tests</span>
+        <span class="n">rejected</span> <span class="o">=</span> <span class="n">p_values</span> <span class="o">&lt;</span> <span class="n">threshold</span>
+        
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;holm&#39;</span><span class="p">:</span>
+        <span class="c1"># Holm-Bonferroni method</span>
+        <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+        <span class="n">sorted_p</span> <span class="o">=</span> <span class="n">p_values</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">]</span>
+        
+        <span class="n">corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+        <span class="n">rejected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_tests</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_tests</span><span class="p">):</span>
+            <span class="n">adjusted_p</span> <span class="o">=</span> <span class="n">sorted_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_tests</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">corrected</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">adjusted_p</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">adjusted_p</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="p">:</span>
+                <span class="n">rejected</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>  <span class="c1"># Stop at first non-rejection</span>
+                
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">/</span> <span class="p">(</span><span class="n">n_tests</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">rejected</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;fdr_bh&#39;</span><span class="p">:</span>
+        <span class="c1"># Benjamini-Hochberg FDR control</span>
+        <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+        <span class="n">sorted_p</span> <span class="o">=</span> <span class="n">p_values</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">]</span>
+        
+        <span class="c1"># Find largest i such that P(i) &lt;= (i/m) * alpha</span>
+        <span class="n">thresh_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sorted_p</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_tests</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_tests</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">thresh_idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">max_idx</span> <span class="o">=</span> <span class="n">thresh_idx</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="n">sorted_p</span><span class="p">[</span><span class="n">max_idx</span><span class="p">]</span>
+            <span class="n">rejected</span> <span class="o">=</span> <span class="n">p_values</span> <span class="o">&lt;=</span> <span class="n">threshold</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">rejected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_tests</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+            
+        <span class="c1"># Adjusted p-values</span>
+        <span class="n">corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_tests</span><span class="p">):</span>
+            <span class="n">corrected</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="n">sorted_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_tests</span> <span class="o">/</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">1.0</span>
+            <span class="p">)</span>
+            
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;fdr_by&#39;</span><span class="p">:</span>
+        <span class="c1"># Benjamini-Yekutieli FDR control</span>
+        <span class="n">c_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_tests</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>  <span class="c1"># Harmonic sum</span>
+        <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+        <span class="n">sorted_p</span> <span class="o">=</span> <span class="n">p_values</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">]</span>
+        
+        <span class="n">thresh_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">sorted_p</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_tests</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n_tests</span> <span class="o">*</span> <span class="n">c_m</span><span class="p">))</span> <span class="o">*</span> <span class="n">alpha</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">thresh_idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">max_idx</span> <span class="o">=</span> <span class="n">thresh_idx</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="n">sorted_p</span><span class="p">[</span><span class="n">max_idx</span><span class="p">]</span>
+            <span class="n">rejected</span> <span class="o">=</span> <span class="n">p_values</span> <span class="o">&lt;=</span> <span class="n">threshold</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">rejected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_tests</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+            
+        <span class="n">corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">p_values</span> <span class="o">*</span> <span class="n">n_tests</span> <span class="o">*</span> <span class="n">c_m</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown correction method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;corrected&#39;</span><span class="p">:</span> <span class="n">corrected</span><span class="p">,</span>
+        <span class="s1">&#39;rejected&#39;</span><span class="p">:</span> <span class="n">rejected</span><span class="p">,</span>
+        <span class="s1">&#39;threshold&#39;</span><span class="p">:</span> <span class="n">threshold</span><span class="p">,</span>
+        <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
+        <span class="s1">&#39;n_tests&#39;</span><span class="p">:</span> <span class="n">n_tests</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="combine_p_values">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.p_values.combine_p_values">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">combine_p_values</span><span class="p">(</span>
+    <span class="n">p_values</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]],</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fisher&#39;</span><span class="p">,</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine multiple p-values into a single test statistic.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    p_values : array-like</span>
+<span class="sd">        P-values to combine</span>
+<span class="sd">    method : {&#39;fisher&#39;, &#39;stouffer&#39;, &#39;min&#39;, &#39;max&#39;}, default=&#39;fisher&#39;</span>
+<span class="sd">        Combination method:</span>
+<span class="sd">        - &#39;fisher&#39;: Fisher&#39;s combined probability test</span>
+<span class="sd">        - &#39;stouffer&#39;: Stouffer&#39;s Z-score method</span>
+<span class="sd">        - &#39;min&#39;: Minimum p-value</span>
+<span class="sd">        - &#39;max&#39;: Maximum p-value</span>
+<span class="sd">    weights : array-like, optional</span>
+<span class="sd">        Weights for weighted combination (only for Stouffer&#39;s method)</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result : dict</span>
+<span class="sd">        Dictionary containing:</span>
+<span class="sd">        - &#39;statistic&#39;: Combined test statistic</span>
+<span class="sd">        - &#39;p_value&#39;: Combined p-value</span>
+<span class="sd">        - &#39;method&#39;: Combination method used</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No p-values provided&quot;</span><span class="p">)</span>
+        
+    <span class="c1"># Check for invalid p-values</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">((</span><span class="n">p_values</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">p_values</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;P-values must be between 0 and 1&quot;</span><span class="p">)</span>
+        
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;fisher&#39;</span><span class="p">:</span>
+        <span class="c1"># Fisher&#39;s combined probability test</span>
+        <span class="c1"># -2 * sum(log(p_i)) ~ chi-squared(2n)</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">):</span>
+            <span class="n">log_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+            <span class="n">log_p</span><span class="p">[</span><span class="n">p_values</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>  <span class="c1"># Handle p=0</span>
+            
+        <span class="n">statistic</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">log_p</span><span class="p">)</span>
+        <span class="n">p_value</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">stats</span><span class="o">.</span><span class="n">chi2</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">statistic</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;stouffer&#39;</span><span class="p">:</span>
+        <span class="c1"># Stouffer&#39;s Z-score method</span>
+        <span class="c1"># sum(Phi^(-1)(1-p_i)) / sqrt(n) ~ N(0,1)</span>
+        <span class="n">z_scores</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p_values</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Weights must have same length as p_values&quot;</span><span class="p">)</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">statistic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span> <span class="o">*</span> <span class="n">z_scores</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">statistic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">z_scores</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            
+        <span class="n">p_value</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">statistic</span><span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;min&#39;</span><span class="p">:</span>
+        <span class="c1"># Minimum p-value (Tippett&#39;s method)</span>
+        <span class="n">statistic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+        <span class="n">p_value</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">statistic</span><span class="p">)</span><span class="o">**</span><span class="n">n</span>
+        
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;max&#39;</span><span class="p">:</span>
+        <span class="c1"># Maximum p-value</span>
+        <span class="n">statistic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+        <span class="n">p_value</span> <span class="o">=</span> <span class="n">statistic</span><span class="o">**</span><span class="n">n</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown combination method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;statistic&#39;</span><span class="p">:</span> <span class="n">statistic</span><span class="p">,</span>
+        <span class="s1">&#39;p_value&#39;</span><span class="p">:</span> <span class="n">p_value</span><span class="p">,</span>
+        <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
+        <span class="s1">&#39;n_tests&#39;</span><span class="p">:</span> <span class="n">n</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="permutation_test">
+<a class="viewcode-back" href="../../../api.html#submarit.validation.p_values.permutation_test">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">permutation_test</span><span class="p">(</span>
+    <span class="n">data1</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">data2</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span>
+    <span class="n">statistic_func</span><span class="p">:</span> <span class="nb">callable</span><span class="p">,</span>
+    <span class="n">n_permutations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PValueResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform permutation test for difference between two groups.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data1 : ndarray</span>
+<span class="sd">        First group data</span>
+<span class="sd">    data2 : ndarray</span>
+<span class="sd">        Second group data</span>
+<span class="sd">    statistic_func : callable</span>
+<span class="sd">        Function to compute test statistic. Should accept two arrays</span>
+<span class="sd">        and return a scalar statistic.</span>
+<span class="sd">    n_permutations : int, default=10000</span>
+<span class="sd">        Number of permutations</span>
+<span class="sd">    random_state : int, optional</span>
+<span class="sd">        Random seed for reproducibility</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result : PValueResult</span>
+<span class="sd">        Permutation test results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Compute observed statistic</span>
+    <span class="n">observed</span> <span class="o">=</span> <span class="n">statistic_func</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">)</span>
+    
+    <span class="c1"># Combine data</span>
+    <span class="n">combined</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">])</span>
+    <span class="n">n1</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data1</span><span class="p">)</span>
+    <span class="n">n_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span>
+    
+    <span class="c1"># Generate permutation distribution</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+    <span class="n">perm_stats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_permutations</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_permutations</span><span class="p">):</span>
+        <span class="c1"># Permute combined data</span>
+        <span class="n">perm_idx</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">n_total</span><span class="p">)</span>
+        <span class="n">perm_data1</span> <span class="o">=</span> <span class="n">combined</span><span class="p">[</span><span class="n">perm_idx</span><span class="p">[:</span><span class="n">n1</span><span class="p">]]</span>
+        <span class="n">perm_data2</span> <span class="o">=</span> <span class="n">combined</span><span class="p">[</span><span class="n">perm_idx</span><span class="p">[</span><span class="n">n1</span><span class="p">:]]</span>
+        
+        <span class="c1"># Compute permutation statistic</span>
+        <span class="n">perm_stats</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">statistic_func</span><span class="p">(</span><span class="n">perm_data1</span><span class="p">,</span> <span class="n">perm_data2</span><span class="p">)</span>
+        
+    <span class="c1"># Calculate p-value (two-sided by default)</span>
+    <span class="k">return</span> <span class="n">calculate_empirical_p_value</span><span class="p">(</span>
+        <span class="n">observed</span><span class="p">,</span> <span class="n">perm_stats</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;two-sided&#39;</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, SUBMARIT Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
