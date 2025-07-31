@@ -303,6 +303,6 @@ If you use SUBMARIT in your research, please cite:
   title = {SUBMARIT: SUBMARket Identification and Testing},
   author = {Your Name},
   year = {2024},
-  url = {https://github.com/yourusername/submarit}
+  url = {https://github.com/m-marinucci/SUBMARIT}
 }
 ```

@@ -184,7 +184,7 @@ Next Steps
 - Learn about `advanced algorithms <api/algorithms.html>`_
 - Explore `evaluation methods <api/evaluation.html>`_
 - Read the `MATLAB migration guide <migration_guide.html>`_
-- Check out `example notebooks <https://github.com/yourusername/submarit/tree/main/examples>`_
+- Check out `example notebooks <https://github.com/m-marinucci/SUBMARIT/tree/main/examples>`_
 
 Common Patterns
 ---------------

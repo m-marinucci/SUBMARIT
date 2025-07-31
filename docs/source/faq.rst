@@ -431,7 +431,7 @@ Where to get help?
 ~~~~~~~~~~~~~~~~~~
 
 1. **Documentation**: Read the full documentation at https://submarit.readthedocs.io
-2. **GitHub Issues**: Report bugs or request features at https://github.com/yourusername/submarit/issues
+2. **GitHub Issues**: Report bugs or request features at https://github.com/m-marinucci/SUBMARIT/issues
 3. **Stack Overflow**: Ask questions with tag 'submarit'
 4. **Email**: Contact maintainers at submarit@example.com
 

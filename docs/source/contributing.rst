@@ -5,7 +5,7 @@ Thank you for your interest in contributing to SUBMARIT! This guide will help yo
 
 .. note::
    This is the Sphinx documentation version of our contributing guide. 
-   For the most up-to-date version, please see the `CONTRIBUTING.md <https://github.com/yourusername/submarit/blob/main/CONTRIBUTING.md>`_ file in the repository.
+   For the most up-to-date version, please see the `CONTRIBUTING.md <https://github.com/m-marinucci/SUBMARIT/blob/main/CONTRIBUTING.md>`_ file in the repository.
 
 Getting Started
 ---------------
@@ -17,8 +17,8 @@ Development Setup
 
 .. code-block:: bash
 
-    git clone https://github.com/yourusername/submarit.git
-    cd submarit
+    git clone https://github.com/m-marinucci/SUBMARIT.git
+    cd SUBMARIT
 
 2. Create a virtual environment:
 

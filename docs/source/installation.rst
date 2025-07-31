@@ -27,7 +27,7 @@ For the latest development version:
 
 .. code-block:: bash
 
-    pip install git+https://github.com/yourusername/submarit.git
+    pip install git+https://github.com/m-marinucci/SUBMARIT.git
 
 Installation from Source
 ------------------------
@@ -36,8 +36,8 @@ Clone the repository and install in development mode:
 
 .. code-block:: bash
 
-    git clone https://github.com/yourusername/submarit.git
-    cd submarit
+    git clone https://github.com/m-marinucci/SUBMARIT.git
+    cd SUBMARIT
     pip install -e .[dev]
 
 This installs the package in editable mode along with development dependencies.
@@ -171,6 +171,6 @@ Getting Help
 If you encounter issues:
 
 1. Check the `FAQ <faq.html>`_
-2. Search `GitHub Issues <https://github.com/yourusername/submarit/issues>`_
+2. Search `GitHub Issues <https://github.com/m-marinucci/SUBMARIT/issues>`_
 3. Ask on `Stack Overflow <https://stackoverflow.com/questions/tagged/submarit>`_ with tag 'submarit'
 4. Contact the maintainers
