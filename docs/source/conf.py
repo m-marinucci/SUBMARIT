@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 # Project information
 project = 'SUBMARIT'
-copyright = '2024, SUBMARIT Contributors'
+copyright = '2024, SUBMARIT Contributors. Original MATLAB implementation by Stephen France et al.'
 author = 'SUBMARIT Contributors'
 release = '0.1.0'
 

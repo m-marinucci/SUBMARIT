@@ -1,7 +1,12 @@
 MATLAB to Python Migration Guide
 =================================
 
-This guide helps MATLAB users transition to SUBMARIT's Python implementation.
+This guide helps MATLAB users transition from the original MATLAB SUBMARIT implementation to the Python version.
+
+.. note::
+   The original MATLAB implementation was developed by Stephen France (Mississippi State University) 
+   and other contributors. This Python implementation maintains compatibility while offering 
+   modern improvements and performance optimizations.
 
 Function Mapping Table
 ----------------------

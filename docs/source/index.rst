@@ -69,6 +69,25 @@ Getting Help
 * **Performance**: Check the :doc:`performance` guide
 * **Questions**: See the :doc:`faq` or file an issue on GitHub
 
+Credits and Acknowledgments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This Python implementation is based on the original MATLAB SUBMARIT package.
+
+**Original MATLAB Implementation**
+
+* Stephen France, Mississippi State University (RandIndex4.m, 2012)
+* Additional contributors (names unknown)
+
+**Academic Foundations**
+
+The SUBMARIT methodology is based on submarket identification research from marketing science:
+
+* Rand, W.M. (1971) - Objective criteria for the evaluation of clustering methods
+* Hubert, L. and Arabie, P. (1985) - Comparing partitions (Adjusted Rand Index)
+* Urban, G.L., Johnson, P.L., and Hauser, J.R. - Market structure analysis
+* Tibshirani, R., Walther, G., and Hastie, T. (2001) - Estimating the number of clusters via the gap statistic
+
 Indices and tables
 ==================
 
