@@ -83,6 +83,19 @@ For detailed migration instructions, see:
 - For Python implementation: See main project README.md
 - For migration help: Open an issue in the main repository
 
+## 📝 Credits
+
+### Known Contributors
+- Stephen France, Mississippi State University (RandIndex4.m, Version 0.10, 08/07/2012)
+- Additional contributors unknown
+
+### Academic References
+The implementation is based on the following academic works:
+- Rand, W.M. (1971) - Objective criteria for the evaluation of clustering methods
+- Hubert, L. and Arabie, P. (1985) - Comparing partitions (Adjusted Rand Index)
+- Urban, G.L., Johnson, P.L., and Hauser, J.R. - Market structure analysis (Z-value calculations)
+- Tibshirani, R., Walther, G., and Hastie, T. (2001) - Estimating the number of clusters via the gap statistic
+
 ## ⚖️ License
 
 The MATLAB implementation maintains its original license. See the main project LICENSE file for details.

@@ -127,3 +127,14 @@ If you use SUBMARIT in your research, please cite:
 ## Acknowledgments
 
 This is a Python implementation of the original MATLAB SUBMARIT package. The original MATLAB files are preserved in the `matlab_original/` directory for reference and validation purposes.
+
+### Original MATLAB Implementation Credits
+The MATLAB implementation includes contributions from:
+- Stephen France, Mississippi State University (RandIndex4.m, 2012)
+- Additional contributors (names unknown)
+
+The methodology is based on submarket identification research from marketing science literature, including:
+- Rand (1971) - Rand Index for clustering similarity
+- Hubert and Arabie (1985) - Adjusted Rand Index
+- Urban, Johnson, and Hauser - Z-value calculations
+- Tibshirani, Walther, and Hastie (2001) - GAP statistic for optimal cluster selection
