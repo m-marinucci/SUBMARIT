@@ -35,3 +35,19 @@ repos:
       - id: mypy
         additional_dependencies: [types-all]
         args: ["--strict"]
+
+  # Documentation checks
+  - repo: https://github.com/rstcheck/rstcheck
+    rev: v6.2.0
+    hooks:
+      - id: rstcheck
+        args: ["--report-level=warning"]
+        files: '\.(rst|rest)$'
+        additional_dependencies: [sphinx]
+
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: ["--convention=google", "--add-ignore=D100,D101,D102,D103,D104,D105,D106,D107"]
+        files: '^src/submarit/.*\.py$'

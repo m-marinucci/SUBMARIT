@@ -6,7 +6,9 @@ product substitution patterns.
 """
 
 __version__ = "0.1.0"
-__author__ = "SUBMARIT Contributors"
+__author__ = "Numinate Consulting"
+__email__ = "info@numinate.com"
+__url__ = "www.numinate.com"
 
 from .algorithms import (
     KSMLocalSearch,

@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "SUBMARIT Contributors"},
+    {name = "Numinate Consulting", email = "info@numinate.com"},
 ]
 keywords = ["clustering", "market analysis", "substitution patterns", "submarket identification"]
 classifiers = [
@@ -77,7 +77,7 @@ submarit = "submarit.cli:main"
 [project.urls]
 "Homepage" = "https://github.com/m-marinucci/SUBMARIT"
 "Bug Tracker" = "https://github.com/m-marinucci/SUBMARIT/issues"
-"Documentation" = "https://submarit.readthedocs.io/"
+"Documentation" = "https://m-marinucci.github.io/SubmarketIdentificationTesting/"
 
 [tool.setuptools.packages.find]
 where = ["src"]

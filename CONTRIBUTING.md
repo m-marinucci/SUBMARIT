@@ -18,7 +18,7 @@ Thank you for your interest in contributing to SUBMARIT! This document provides 
 
 3. Install the package in development mode:
    ```bash
-   pip install -e ".[dev]"
+   pip install -e ".[dev,docs]"
    ```
 
 4. Install pre-commit hooks:
@@ -33,7 +33,8 @@ Thank you for your interest in contributing to SUBMARIT! This document provides 
 - Use Black for code formatting
 - Use isort for import sorting
 - Use type hints for all functions
-- Write descriptive docstrings for all public APIs
+- Write descriptive docstrings for all public APIs using Google style
+- Pre-commit hooks will automatically check and format your code
 
 ### Testing
 - Write tests for all new functionality
@@ -47,6 +48,23 @@ Thank you for your interest in contributing to SUBMARIT! This document provides 
 - Update the relevant documentation in `docs/`
 - Include examples in docstrings where appropriate
 - Keep the changelog updated
+
+#### Building Documentation Locally
+```bash
+cd docs
+make clean html
+```
+
+View the built documentation at `docs/_build/html/index.html`.
+
+For live preview during development:
+```bash
+cd docs
+make livehtml
+```
+
+Our documentation is automatically built and deployed to GitHub Pages:
+https://m-marinucci.github.io/SubmarketIdentificationTesting/
 
 ## Development Workflow
 
