@@ -64,7 +64,7 @@ make livehtml
 ```
 
 Our documentation is automatically built and deployed to GitHub Pages:
-https://m-marinucci.github.io/SubmarketIdentificationTesting/
+https://m-marinucci.github.io/SUBMARIT/
 
 ## Development Workflow
 

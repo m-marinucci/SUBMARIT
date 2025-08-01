@@ -77,7 +77,7 @@ submarit = "submarit.cli:main"
 [project.urls]
 "Homepage" = "https://github.com/m-marinucci/SUBMARIT"
 "Bug Tracker" = "https://github.com/m-marinucci/SUBMARIT/issues"
-"Documentation" = "https://m-marinucci.github.io/SubmarketIdentificationTesting/"
+"Documentation" = "https://m-marinucci.github.io/SUBMARIT/"
 
 [tool.setuptools.packages.find]
 where = ["src"]

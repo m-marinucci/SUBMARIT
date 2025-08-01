@@ -6,7 +6,7 @@ Welcome to SUBMARIT's documentation!
 .. note::
 
    The canonical documentation for SUBMARIT is hosted on GitHub Pages at:
-   https://m-marinucci.github.io/SubmarketIdentificationTesting/
+   https://m-marinucci.github.io/SUBMARIT/
    
    This ensures documentation stays in sync with the latest code changes.
 
